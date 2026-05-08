@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 6</title>
+  <style>
+    body { background: #1e1e2e; color: #cdd6f4; padding: 2rem; font-family: sans-serif; }
+    ol { counter-reset: items; list-style: none; padding-left: 0; }
+    li { counter-increment: items; display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; }
+    li::before { content: counter(items); min-width: 1.8rem; height: 1.8rem; background: #313244; border: 1px solid #585b70; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #89b4fa; flex-shrink: 0; margin-top: 0.25rem; }
+    details { flex: 1; min-width: 0; }
+    .iframe-wrap { width: 100%; height: 50vh; margin-top: 0.5rem; display: flex; flex-direction: column; }
+    iframe { width: 100%; flex: 1; display: block; min-height: 0; }
+    .drag-handle { height: 6px; background: #45475a; cursor: ns-resize; flex-shrink: 0; }
+    .drag-handle:hover { background: #585b70; }
+    summary { cursor: pointer; padding: 0.5rem 0.8rem; border-radius: 6px; list-style: none; display: flex; align-items: center; gap: 0.5rem; background: #313244; border: 1px solid #585b70; user-select: none; }
+    summary::before { content: "▶"; font-size: 0.75rem; color: #89b4fa; transition: transform 0.15s; flex-shrink: 0; }
+    details[open] > summary::before { transform: rotate(90deg); }
+    details[open] > summary { border-color: #89b4fa; }
+    summary:hover { background: #45475a; }
+    .summary-title { flex: 1; min-width: 0; }
+    .summary-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
+    .reset { background: #313244; color: #cdd6f4; border: 1px solid #585b70; border-radius: 4px; padding: 0.2rem 0.5rem; cursor: pointer; font-size: 0.85rem; margin-top: 0.4rem; display: block; }
+    .reset:hover { background: #45475a; }
+    .pill { padding: 0.15rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; line-height: 1.2; cursor: pointer; border: 1px solid; background: #45475a; }
+    .popout { color: #89b4fa; border-color: #89b4fa; }
+    .popout:hover { background: #89b4fa; color: #1e1e2e; }
+    .ask-ai { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
+    .ask-ai:hover { background: #a6e3a1; color: #1e1e2e; }
+  </style>
+</head>
+<body>
+  <h1>Constructs</h1>
+  <p style="color:#a6adc8;font-size:0.95rem;line-height:1.5;margin:0 0 1.5rem 0;max-width:60rem;">Where the object-oriented side of Scala shows up. Functional programming brings a valuable inclusion though.</p>
+  <ol id="snippets"></ol>
+
+  <script>
+    const base = "https://scastie.scala-lang.org/";
+
+    async function fetchSnippetData(id) {
+      try {
+        const res = await fetch(`${base}api/snippets/${id}`);
+        if (!res.ok) return null;
+        const data = await res.json();
+        const inputs = data?.inputs?.SbtInputs;
+        if (!inputs) return null;
+        const target = inputs.target ?? {};
+        const family = Object.keys(target)[0] ?? null;
+        const scalaVersion = target[family]?.scalaVersion ?? null;
+        return { code: inputs.code ?? null, family, scalaVersion };
+      } catch {
+        return null;
+      }
+    }
+
+    function formatVersion(family, scalaVersion) {
+      if (family && scalaVersion) return `Scala ${scalaVersion} (${family === "Scala3" ? "Scala 3" : "Scala 2"})`;
+      if (scalaVersion) return `Scala ${scalaVersion}`;
+      return "Scala";
+    }
+
+    function buildPrompt(url, data) {
+      const lang = formatVersion(data?.family, data?.scalaVersion);
+      const header = `Please explain what this snippet is teaching, what the gotcha is, and what idiomatic Scala would look like. The code below is written in ${lang}.`;
+      if (data?.code) return `${header}\n\nSource:\n\`\`\`scala\n${data.code}\n\`\`\``;
+      return `${header}\n\nSource (Scastie): ${url}\n\n(Note: the code itself is on the Scastie page; I couldn't inline it.)`;
+    }
+
+    const snippets = [
+      ["Xjstv5l5T7OiXBqppGtjaA", "What is this type?"],
+      ["qYxsiPFgTeWPQj8PZtanag", "Why isn't this passing, and can I make it pass?"],
+      ["NkJQehhAQY6LaKiUWCA0qA", "I can't read."],
+      ["XIPOzuPkTJmZ1C8yDxWgBQ", "Into the shadows"],
+      ["JWl6O9mCSYuxGoPQCYVbQg", "I know I can just reference the inner variable, but I heard about `export`."],
+      ["WxEcurQxQqqNRdvlVeXoYg", "Why can't I know your age? Side question: Where's the `new`?"],
+      ["ffibw6T6TR6wGTOhTUgS1A", "You've made a case."],
+      ["6GRLtvT4QLKEGbNAO4xYHw", "I don't know any of her songs."],
+      ["HVOGZpj3QpmDPiu6ylB0lg", "Ain't that smart of a phone"],
+      ["D6Ch6rS4QWW76oW59idGAg", "Isn't a cat a pet?"],
+      ["XYeg53jKTQO0l8nrpMpF3Q", "But it's both!"],
+      ["aZBggkqNSNiTnll2tHPvRA", "This enum match doesn't like me."],
+      ["kcnWPkh9QS26kY4oZt0IPA", "Enums can have other things, so play around with this as well. (Scala has implementation limitations that can be surprising.)"],
+      ["Yecaj2NPQM2QU1uIOW7nag", "`sealed` came before `enum`. (Often it's still more flexible which you might discover as you play around.)"],
+      ["LEnngDoqSeyrYEsf4n9eCQ", "But I want precision."],
+      ["ohmjxG7rSvuRTsjEYTWsQg", "Inheritance when it goes too far"],
+      ["mjrfGzwGTHaS6JT8FnRgcg", "There has been a mixup. (#hashtagwillallowitthoughifyoureallywantto)"],
+      ["k4fX17AZQZuInesemcBQmg", "This type class construct is intriguing."],
+    ];
+
+    const ol = document.getElementById("snippets");
+    snippets.forEach(([id, title]) => {
+      const url = base + id;
+      const iframe = document.createElement("iframe");
+      iframe.dataset.src = url;
+      const handle = document.createElement("div");
+      handle.className = "drag-handle";
+      handle.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        const startY = e.clientY;
+        const startH = wrap.offsetHeight;
+        const onMove = (e) => { wrap.style.height = Math.max(100, startH + e.clientY - startY) + "px"; };
+        const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      });
+      const wrap = document.createElement("div");
+      wrap.className = "iframe-wrap";
+      wrap.appendChild(iframe);
+      wrap.appendChild(handle);
+      const btn = document.createElement("button");
+      btn.className = "reset";
+      btn.textContent = "↺ Reset";
+      btn.addEventListener("click", () => { iframe.src = url; });
+      const details = document.createElement("details");
+      details.addEventListener("toggle", () => {
+        if (details.open && !iframe.src) iframe.src = url;
+      });
+      const summary = document.createElement("summary");
+      const titleSpan = document.createElement("span");
+      titleSpan.className = "summary-title";
+      titleSpan.textContent = title;
+      summary.appendChild(titleSpan);
+
+      const actions = document.createElement("span");
+      actions.className = "summary-actions";
+
+      const popout = document.createElement("a");
+      popout.href = url;
+      popout.target = "_blank";
+      popout.textContent = "Open ↗";
+      popout.className = "pill popout";
+      popout.title = "Open Scastie in new tab";
+      popout.addEventListener("click", (e) => e.stopPropagation());
+      actions.appendChild(popout);
+
+      const askAi = document.createElement("button");
+      askAi.type = "button";
+      askAi.className = "pill ask-ai";
+      askAi.textContent = "Ask GPT";
+      askAi.title = "Open AI chat with this snippet prefilled";
+      askAi.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        askAi.textContent = "…";
+        const data = await fetchSnippetData(id);
+        const prompt = buildPrompt(url, data);
+        const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
+        window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
+        askAi.textContent = "Ask GPT";
+      });
+      actions.appendChild(askAi);
+
+      summary.appendChild(actions);
+      details.appendChild(summary);
+      details.appendChild(wrap);
+      details.appendChild(btn);
+      const li = document.createElement("li");
+      li.appendChild(details);
+      ol.appendChild(li);
+    });
+  </script>
+</body>
+</html>

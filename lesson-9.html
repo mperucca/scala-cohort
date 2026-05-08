@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lesson 9</title>
+  <style>
+    body { background: #1e1e2e; color: #cdd6f4; padding: 2rem; font-family: sans-serif; }
+    ol { counter-reset: items; list-style: none; padding-left: 0; }
+    li { counter-increment: items; display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; }
+    li::before { content: counter(items); min-width: 1.8rem; height: 1.8rem; background: #313244; border: 1px solid #585b70; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #89b4fa; flex-shrink: 0; margin-top: 0.25rem; }
+    details { flex: 1; min-width: 0; }
+    summary { cursor: pointer; padding: 0.5rem 0.8rem; border-radius: 6px; list-style: none; display: flex; align-items: center; gap: 0.5rem; background: #313244; border: 1px solid #585b70; user-select: none; }
+    summary::before { content: "▶"; font-size: 0.75rem; color: #89b4fa; transition: transform 0.15s; flex-shrink: 0; }
+    details[open] > summary::before { transform: rotate(90deg); }
+    details[open] > summary { border-color: #89b4fa; }
+    summary:hover { background: #45475a; }
+    pre { background: #181825; padding: 1rem; border-radius: 6px; overflow-x: auto; margin: 0.5rem 0 0 0; line-height: 1.55; border: 1px solid #313244; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, monospace; font-size: 0.85rem; color: #cdd6f4; }
+    .draft-note { color: #f9e2af; font-size: 0.85rem; background: #313244; border-left: 3px solid #f9e2af; padding: 0.6rem 0.9rem; border-radius: 4px; margin-bottom: 1.5rem; max-width: 60rem; }
+  </style>
+</head>
+<body>
+  <h1>Synthesis</h1>
+  <p style="color:#a6adc8;font-size:0.95rem;line-height:1.5;margin:0 0 1.5rem 0;max-width:60rem;">Working code drawing on every lesson before it. Collections are the spine; everything else weaves through.</p>
+  <div class="draft-note">Draft format. Once each snippet is on Scastie, this can convert to the standard iframe layout used by the other lessons.</div>
+  <ol id="snippets"></ol>
+
+  <script>
+    const snippets = [
+      ["List, the ground floor", `val nums = List(1, 2, 3, 4, 5)
+val withZero = 0 :: nums          // prepend, O(1)
+val empty = List.empty[Int]
+
+println(nums.head)                 // 1
+println(nums.tail)                 // List(2, 3, 4, 5)
+println(nums.last)                 // 5
+println(nums.length)               // 5
+println(withZero)                  // List(0, 1, 2, 3, 4, 5)`],
+
+      ["The everyday triad — map / filter", `val nums = List(1, 2, 3, 4, 5, 6)
+
+val doubled = nums.map(_ * 2)
+val evens = nums.filter(_ % 2 == 0)
+val doubledEvens = nums.filter(_ % 2 == 0).map(_ * 2)
+
+println(doubled)        // List(2, 4, 6, 8, 10, 12)
+println(evens)          // List(2, 4, 6)
+println(doubledEvens)   // List(4, 8, 12)`],
+
+      ["for is just flatMap and map", `val xs = List(1, 2, 3)
+val ys = List("a", "b")
+
+val pairsFor = for
+  x <- xs
+  y <- ys
+yield (x, y)
+
+val pairsFlat = xs.flatMap(x => ys.map(y => (x, y)))
+
+println(pairsFor)
+println(pairsFlat)
+println(pairsFor == pairsFlat)  // true`],
+
+      ["flatMap collapses a layer", `val maybeNums: List[Option[Int]] =
+  List(Some(1), None, Some(2), None, Some(3))
+
+val collapsed = maybeNums.flatMap(identity)
+val flattened = maybeNums.flatten   // shorthand for the same thing
+
+println(collapsed)   // List(1, 2, 3)
+println(flattened)   // List(1, 2, 3)`],
+
+      ["collect is filter + map + match", `val mixed: List[Any] = List(1, "two", 3, "four", 5, true)
+
+val onlyInts = mixed.collect { case i: Int => i * 10 }
+val onlyStrings = mixed.collect { case s: String => s.toUpperCase }
+
+println(onlyInts)      // List(10, 30, 50)
+println(onlyStrings)   // List(TWO, FOUR)`],
+
+      ["Pattern matching a List", `def sum(xs: List[Int]): Int = xs match
+  case Nil       => 0
+  case x :: rest => x + sum(rest)
+
+def length[A](xs: List[A]): Int = xs match
+  case Nil    => 0
+  case _ :: t => 1 + length(t)
+
+println(sum(List(1, 2, 3, 4, 5)))         // 15
+println(length(List("a", "b", "c")))      // 3`],
+
+      ["partition", `val nums = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+val (evens, odds) = nums.partition(_ % 2 == 0)
+
+println(evens)   // List(2, 4, 6, 8, 10)
+println(odds)    // List(1, 3, 5, 7, 9)`],
+
+      ["Tuples and zip", `val pair: (String, Int) = ("Alice", 30)
+val (name, age) = pair
+println(s"$name is $age")
+
+val names = List("Alice", "Bob", "Carol")
+val ages = List(30, 25, 35)
+val paired = names.zip(ages)
+println(paired)  // List((Alice,30), (Bob,25), (Carol,35))
+
+for (n, a) <- paired do println(s"$n -> $a")`],
+
+      ["groupBy and word frequency", `val text = "the quick brown fox jumps over the lazy dog the fox"
+val words = text.split(" ").toList
+
+val freq = words
+  .groupBy(identity)
+  .view
+  .mapValues(_.length)
+  .toList
+  .sortBy(-_._2)
+
+freq.foreach { case (word, count) => println(s"$word: $count") }`],
+
+      ["Map and the inevitable Option", `val phoneBook = Map(
+  "Alice" -> "555-0001",
+  "Bob"   -> "555-0002"
+)
+
+val alice  = phoneBook.get("Alice")    // Some(555-0001)
+val nobody = phoneBook.get("Carol")    // None
+
+println(alice)
+println(nobody)
+println(alice.getOrElse("unknown"))    // 555-0001
+println(nobody.getOrElse("unknown"))   // unknown`],
+
+      ["Option(...) at the Java boundary", `// Java APIs often return null. Wrap them at the seam.
+val maybeNull: String = null
+val safe: Option[String]    = Option(maybeNull)   // None
+val present: Option[String] = Option("hello")     // Some(hello)
+
+println(safe)
+println(present)
+
+val length = Option(maybeNull).map(_.length).getOrElse(0)
+println(length)   // 0`],
+
+      ["Java interop — asScala / asJava", `import scala.jdk.CollectionConverters.*
+
+val javaList = new java.util.ArrayList[String]()
+javaList.add("a"); javaList.add("b")
+
+val scalaList: List[String] = javaList.asScala.toList
+println(scalaList)   // List(a, b)
+
+val javaSet: java.util.Set[Int] = Set(1, 2, 3).asJava
+println(javaSet)
+
+import scala.jdk.OptionConverters.*
+val jopt: java.util.Optional[String] = java.util.Optional.of("hi")
+val asScalaOpt: Option[String] = jopt.toScala
+println(asScalaOpt)   // Some(hi)`],
+
+      ["Set and uniqueness", `val a = Set(1, 2, 3, 4)
+val b = Set(3, 4, 5, 6)
+
+println(a.union(b))         // Set(1, 2, 3, 4, 5, 6)
+println(a.intersect(b))     // Set(3, 4)
+println(a.diff(b))          // Set(1, 2)
+
+val withDupes = List(1, 1, 2, 2, 3)
+println(withDupes.distinct) // List(1, 2, 3)`],
+
+      ["mkString", `val nums = List(1, 2, 3, 4)
+
+println(nums.mkString)                  // 1234
+println(nums.mkString(", "))            // 1, 2, 3, 4
+println(nums.mkString("[", ", ", "]"))  // [1, 2, 3, 4]`],
+
+      ["Ranges", `val incl   = 1 to 5      // 1, 2, 3, 4, 5
+val excl   = 1 until 5   // 1, 2, 3, 4
+val byTwos = 1 to 10 by 2
+
+println(incl.toList)
+println(excl.toList)
+println(byTwos.toList)
+
+val sumOfFirst100 = (1 to 100).sum
+println(sumOfFirst100)   // 5050`],
+
+      ["Vector vs List", `// List: fast prepend, slow random access.
+val list = List(1, 2, 3, 4, 5)
+val prepended = 0 :: list                  // O(1)
+
+// Vector: balanced for most operations.
+val vec = Vector(1, 2, 3, 4, 5)
+val updated  = vec.updated(2, 99)          // O(log n)
+val accessed = vec(2)                      // O(log n)
+
+println(prepended)   // List(0, 1, 2, 3, 4, 5)
+println(updated)     // Vector(1, 2, 99, 4, 5)
+println(accessed)    // 3
+
+// Rule of thumb: List for sequential access from the front; Vector for everything else.`],
+
+      ["Either in a for", `def parseInt(s: String): Either[String, Int] =
+  s.toIntOption.toRight(s"not a number: $s")
+
+def positive(n: Int): Either[String, Int] =
+  if n > 0 then Right(n) else Left(s"not positive: $n")
+
+val result = for
+  a <- parseInt("12")
+  b <- parseInt("3")
+  c <- positive(a - b * 100)
+yield c
+
+println(result)   // Left(not positive: -288)`],
+
+      ["sortBy meets Ordering", `case class Person(name: String, age: Int)
+
+val people = List(
+  Person("Alice", 30),
+  Person("Bob",   25),
+  Person("Carol", 35)
+)
+
+val byAge     = people.sortBy(_.age)       // Ordering[Int] picked up implicitly
+val byName    = people.sortBy(_.name)      // Ordering[String] picked up implicitly
+val byAgeDesc = people.sortBy(-_.age)
+
+byAge.foreach(println)
+println("---")
+byName.foreach(println)`],
+
+      ["A List of case classes", `case class Sale(product: String, price: Double, units: Int)
+
+val sales = List(
+  Sale("apple", 1.0, 50),
+  Sale("bread", 3.5, 20),
+  Sale("apple", 1.0, 30),
+  Sale("bread", 3.5, 10),
+  Sale("milk",  2.5, 40)
+)
+
+val totalRevenue = sales.map(s => s.price * s.units).sum
+println(s"total: $$$totalRevenue")
+
+val byProduct = sales
+  .groupBy(_.product)
+  .view
+  .mapValues(_.map(s => s.price * s.units).sum)
+  .toMap
+
+byProduct.toList.sortBy(-_._2).foreach { case (p, r) => println(s"$p: $$$r") }`],
+
+      ["A List of sum types", `sealed trait Shape
+case class Circle(radius: Double)                  extends Shape
+case class Rectangle(width: Double, height: Double) extends Shape
+case class Triangle(base: Double, height: Double)   extends Shape
+
+def area(s: Shape): Double = s match
+  case Circle(r)        => math.Pi * r * r
+  case Rectangle(w, h)  => w * h
+  case Triangle(b, h)   => 0.5 * b * h
+
+val shapes: List[Shape] = List(Circle(2), Rectangle(3, 4), Triangle(5, 6))
+val total = shapes.map(area).sum
+println(f"total area: $total%.2f")`],
+
+      ["Lazy when it matters — LazyList", `// Each element computed on demand and cached.
+val nats: LazyList[Int] = LazyList.from(1)
+
+val firstTenSquares = nats.map(n => n * n).take(10).toList
+println(firstTenSquares)   // List(1, 4, 9, ..., 100)
+
+val expensive = LazyList.from(1).map { n =>
+  println(s"computing $n")
+  n * 2
+}
+val firstThree = expensive.take(3).toList
+println(firstThree)`],
+
+      ["fold as a generalization", `val nums = List(1, 2, 3, 4, 5)
+
+val sum     = nums.foldLeft(0)(_ + _)
+val product = nums.foldLeft(1)(_ * _)
+println(sum)       // 15
+println(product)   // 120
+
+val letters = "hello world".toList.filter(_.isLetter)
+val charCount = letters.foldLeft(Map.empty[Char, Int]) { (acc, c) =>
+  acc.updated(c, acc.getOrElse(c, 0) + 1)
+}
+println(charCount)`],
+
+      ["Future and the same shape", `import scala.concurrent.{Future, Await}
+import scala.concurrent.duration.*
+import scala.concurrent.ExecutionContext.Implicits.global
+
+def fetch(id: Int): Future[String] = Future {
+  Thread.sleep(50)
+  s"result-$id"
+}
+
+val combined: Future[String] = for
+  a <- fetch(1)
+  b <- fetch(2)
+yield s"$a + $b"
+
+val result = Await.result(combined, 1.second)
+println(result)   // result-1 + result-2`],
+
+      ["@tailrec — recursion that won't blow the stack", `import scala.annotation.tailrec
+
+// Not tail-recursive: the + happens after the recursive call,
+// so each call keeps a frame on the stack. Big inputs blow up.
+def sumUnsafe(xs: List[Int]): Int = xs match
+  case Nil       => 0
+  case x :: rest => x + sumUnsafe(rest)
+
+// Tail-recursive: the recursive call is the last thing; the
+// compiler rewrites it as a loop. @tailrec enforces this at compile time.
+@tailrec
+def sumSafe(xs: List[Int], acc: Int = 0): Int = xs match
+  case Nil       => acc
+  case x :: rest => sumSafe(rest, acc + x)
+
+println(sumSafe(List(1, 2, 3, 4, 5)))     // 15
+println(sumSafe((1 to 100000).toList))    // safe on long inputs`],
+
+      ["@switch — hint the compiler to make a fast jump table", `import scala.annotation.switch
+
+// On a match over a constant Int/Char/Byte/Short, @switch asks the
+// compiler to emit a tableswitch (a constant-time jump) instead of
+// chained comparisons. If the match isn't eligible, it warns at compile time.
+def name(d: Int): String = (d: @switch) match
+  case 0 => "zero"
+  case 1 => "one"
+  case 2 => "two"
+  case 3 => "three"
+  case _ => "many"
+
+println(name(2))   // two
+println(name(9))   // many`],
+
+      ["Mutable on the inside, immutable on the outside", `import scala.collection.mutable
+
+// A small, controlled use of mutable: fast incremental work
+// inside a function, returning an immutable result at the boundary.
+def charCount(s: String): Map[Char, Int] = {
+  val counts = mutable.Map.empty[Char, Int].withDefaultValue(0)
+  for c <- s if c.isLetter do
+    counts(c) += 1
+  counts.toMap   // hand back something immutable
+}
+
+println(charCount("hello world"))   // Map(h -> 1, e -> 1, l -> 3, ...)`],
+    ];
+
+    const ol = document.getElementById("snippets");
+    snippets.forEach(([title, code]) => {
+      const details = document.createElement("details");
+      const summary = document.createElement("summary");
+      summary.textContent = title;
+      const pre = document.createElement("pre");
+      const codeEl = document.createElement("code");
+      codeEl.textContent = code;
+      pre.appendChild(codeEl);
+      details.appendChild(summary);
+      details.appendChild(pre);
+      const li = document.createElement("li");
+      li.appendChild(details);
+      ol.appendChild(li);
+    });
+  </script>
+</body>
+</html>
