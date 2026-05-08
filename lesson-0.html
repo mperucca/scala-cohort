@@ -223,7 +223,7 @@
         updateProgress();
       }
 
-      understoodBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("understood"); });
+      understoodBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("understood"); if (states[id] === "understood") details.open = false; });
       revisitBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("revisit"); });
 
       const askAi = document.createElement("button");
