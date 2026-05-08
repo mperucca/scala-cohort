@@ -29,6 +29,8 @@
     .pill { padding: 0.15rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; line-height: 1.2; cursor: pointer; border: 1px solid; background: #45475a; }
     .popout { color: #89b4fa; border-color: #89b4fa; }
     .popout:hover { background: #89b4fa; color: #1e1e2e; }
+    .copy-link-btn { color: #94e2d5; border-color: #94e2d5; font-family: inherit; }
+    .copy-link-btn:hover { background: #94e2d5; color: #1e1e2e; }
     .ask-ai { color: #cba6f7; border-color: #cba6f7; font-family: inherit; }
     .ask-ai:hover { background: #cba6f7; color: #1e1e2e; }
     .understood-btn { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
@@ -85,7 +87,7 @@
 
     function buildPrompt(url, data) {
       const lang = formatVersion(data?.family, data?.scalaVersion);
-      const header = `This snippet is intentionally flawed in some subtle way to teach a Scala concept. Please explain the concept it's teaching, identify what's wrong, and show what idiomatic Scala would look like. The code below is written in ${lang}.`;
+      const header = `This snippet teaches a Scala concept through something subtly flawed or surprising. Please explain the concept, identify the surprise (a compile error, an unexpected output, or behavior that contradicts a common assumption), and show what idiomatic Scala would look like. The code below is written in ${lang}.`;
       if (data?.code) return `${header}\n\nSource:\n\`\`\`scala\n${data.code}\n\`\`\``;
       return `${header}\n\nSource (Scastie): ${url}\n\n(Note: the code itself is on the Scastie page; I couldn't inline it.)`;
     }
@@ -144,7 +146,7 @@
     }
 
     const ol = document.getElementById("snippets");
-    snippets.forEach(([id, title]) => {
+    snippets.forEach(([id, title], index) => {
       const url = base + id;
       const iframe = document.createElement("iframe");
       iframe.dataset.src = url;
@@ -181,6 +183,7 @@
       actions.className = "summary-actions";
 
       const li = document.createElement("li");
+      li.id = `snippet-${index + 1}`;
 
       const understoodBtn = document.createElement("button");
       understoodBtn.type = "button";
@@ -250,12 +253,40 @@
       popout.addEventListener("click", (e) => e.stopPropagation());
       tools.appendChild(popout);
 
+      const copyLink = document.createElement("button");
+      copyLink.type = "button";
+      copyLink.className = "pill copy-link-btn";
+      copyLink.textContent = "🔗 Copy link";
+      copyLink.title = "Copy link to this snippet";
+      copyLink.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const url = window.location.href.split("#")[0] + `#snippet-${index + 1}`;
+        navigator.clipboard.writeText(url).then(() => {
+          const original = copyLink.textContent;
+          copyLink.textContent = "✓ Copied!";
+          setTimeout(() => { copyLink.textContent = original; }, 1500);
+        });
+      });
+      tools.appendChild(copyLink);
+
       details.appendChild(tools);
       li.appendChild(details);
       ol.appendChild(li);
     });
 
     updateProgress();
+
+    function openFromHash() {
+      const hash = window.location.hash;
+      if (!hash.startsWith("#snippet-")) return;
+      const target = document.querySelector(hash);
+      if (!target) return;
+      const details = target.querySelector("details");
+      if (details) details.open = true;
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    openFromHash();
+    window.addEventListener("hashchange", openFromHash);
   </script>
 </body>
 </html>
