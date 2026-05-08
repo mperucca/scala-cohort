@@ -22,292 +22,304 @@
 </head>
 <body>
   <h1>Synthesis</h1>
-  <p style="color:#a6adc8;font-size:0.95rem;line-height:1.5;margin:0 0 1.5rem 0;max-width:60rem;">Working code drawing on every lesson before it. Collections are the spine; everything else weaves through.</p>
+  <p style="color:#a6adc8;font-size:0.95rem;line-height:1.5;margin:0 0 1.5rem 0;max-width:60rem;">One snippet per data type, each a short tour of construction, common operations, and the patterns it carries from earlier lessons.</p>
   <div class="draft-note">Draft format. Once each snippet is on Scastie, this can convert to the standard iframe layout used by the other lessons.</div>
   <ol id="snippets"></ol>
 
   <script>
     const snippets = [
-      ["List, the ground floor", `val nums = List(1, 2, 3, 4, 5)
-val withZero = 0 :: nums          // prepend, O(1)
-val empty = List.empty[Int]
+      ["List", `import scala.annotation.tailrec
 
-println(nums.head)                 // 1
-println(nums.tail)                 // List(2, 3, 4, 5)
-println(nums.last)                 // 5
-println(nums.length)               // 5
-println(withZero)                  // List(0, 1, 2, 3, 4, 5)`],
+// Construction
+val nums: List[Int] = List(1, 2, 3, 4, 5)
+val withZero: List[Int] = 0 :: nums    // prepend, O(1)
+val empty: List[Int] = Nil
+nums.head                              // 1
+nums.tail                              // List(2, 3, 4, 5)
 
-      ["The everyday triad — map / filter", `val nums = List(1, 2, 3, 4, 5, 6)
+// The everyday triad
+nums.map(_ * 2)                        // List(2, 4, 6, 8, 10)
+nums.filter(_ % 2 == 0)                // List(2, 4)
+nums.foldLeft(0)(_ + _)                // 15
 
-val doubled = nums.map(_ * 2)
-val evens = nums.filter(_ % 2 == 0)
-val doubledEvens = nums.filter(_ % 2 == 0).map(_ * 2)
+// Pattern matching, recursively (with @tailrec for stack safety)
+@tailrec
+def sumSafe(xs: List[Int], acc: Int = 0): Int = xs match
+  case Nil       => acc
+  case x :: rest => sumSafe(rest, acc + x)
+sumSafe(nums)                          // 15
 
-println(doubled)        // List(2, 4, 6, 8, 10, 12)
-println(evens)          // List(2, 4, 6)
-println(doubledEvens)   // List(4, 8, 12)`],
+// partition: split in one pass (returns a tuple of two Lists)
+nums.partition(_ % 2 == 0)             // (List(2, 4), List(1, 3, 5))
 
-      ["for is just flatMap and map", `val xs = List(1, 2, 3)
-val ys = List("a", "b")
+// collect: filter + map + match in one go
+val mixed: List[Any] = List(1, "two", 3, "four")
+mixed.collect { case i: Int => i * 10 }   // List(10, 30)
 
-val pairsFor = for
-  x <- xs
-  y <- ys
+// groupBy: a Map keyed by some property
+nums.groupBy(_ % 2 == 0)
+// Map(false -> List(1, 3, 5), true -> List(2, 4))
+
+// zip: pair with another List, producing tuples
+val names: List[String] = List("a", "b", "c")
+names.zip(nums)                        // List((a,1), (b,2), (c,3))
+
+// for-comprehension: flatMap + map under the hood
+for
+  x <- List(1, 2)
+  y <- List("a", "b")
 yield (x, y)
+// List((1,a), (1,b), (2,a), (2,b))
 
-val pairsFlat = xs.flatMap(x => ys.map(y => (x, y)))
+// sortBy: uses Ordering implicitly
+nums.sortBy(-_)                        // List(5, 4, 3, 2, 1)
 
-println(pairsFor)
-println(pairsFlat)
-println(pairsFor == pairsFlat)  // true`],
+// mkString: back to a string
+nums.mkString(", ")                    // "1, 2, 3, 4, 5"
+nums.mkString("[", "; ", "]")          // "[1; 2; 3; 4; 5]"`],
 
-      ["flatMap collapses a layer", `val maybeNums: List[Option[Int]] =
-  List(Some(1), None, Some(2), None, Some(3))
+      ["Vector", `// Vector: a balanced tree under the hood. Good performance for most ops.
+val v: Vector[Int] = Vector(1, 2, 3, 4, 5)
 
-val collapsed = maybeNums.flatMap(identity)
-val flattened = maybeNums.flatten   // shorthand for the same thing
+// O(log n) for index, update, append, prepend (vs List's O(1) prepend, O(n) random access)
+v(2)                          // 3 — random access
+v.updated(2, 99)              // Vector(1, 2, 99, 4, 5) — non-mutating update
+v :+ 6                        // Vector(1, 2, 3, 4, 5, 6) — append
+0 +: v                        // Vector(0, 1, 2, 3, 4, 5) — prepend
 
-println(collapsed)   // List(1, 2, 3)
-println(flattened)   // List(1, 2, 3)`],
+// Same map/filter/fold API as List
+v.map(_ * 10)                 // Vector(10, 20, 30, 40, 50)
+v.filter(_ > 2)               // Vector(3, 4, 5)
 
-      ["collect is filter + map + match", `val mixed: List[Any] = List(1, "two", 3, "four", 5, true)
+// Easy conversion in either direction
+v.toList                      // List(1, 2, 3, 4, 5)
+List(1, 2, 3).toVector        // Vector(1, 2, 3)
 
-val onlyInts = mixed.collect { case i: Int => i * 10 }
-val onlyStrings = mixed.collect { case s: String => s.toUpperCase }
+// Rule of thumb: List for sequential access from the front; Vector for everything else.`],
 
-println(onlyInts)      // List(10, 30, 50)
-println(onlyStrings)   // List(TWO, FOUR)`],
-
-      ["Pattern matching a List", `def sum(xs: List[Int]): Int = xs match
-  case Nil       => 0
-  case x :: rest => x + sum(rest)
-
-def length[A](xs: List[A]): Int = xs match
-  case Nil    => 0
-  case _ :: t => 1 + length(t)
-
-println(sum(List(1, 2, 3, 4, 5)))         // 15
-println(length(List("a", "b", "c")))      // 3`],
-
-      ["partition", `val nums = List(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
-val (evens, odds) = nums.partition(_ % 2 == 0)
-
-println(evens)   // List(2, 4, 6, 8, 10)
-println(odds)    // List(1, 3, 5, 7, 9)`],
-
-      ["Tuples and zip", `val pair: (String, Int) = ("Alice", 30)
-val (name, age) = pair
-println(s"$name is $age")
-
-val names = List("Alice", "Bob", "Carol")
-val ages = List(30, 25, 35)
-val paired = names.zip(ages)
-println(paired)  // List((Alice,30), (Bob,25), (Carol,35))
-
-for (n, a) <- paired do println(s"$n -> $a")`],
-
-      ["groupBy and word frequency", `val text = "the quick brown fox jumps over the lazy dog the fox"
-val words = text.split(" ").toList
-
-val freq = words
-  .groupBy(identity)
-  .view
-  .mapValues(_.length)
-  .toList
-  .sortBy(-_._2)
-
-freq.foreach { case (word, count) => println(s"$word: $count") }`],
-
-      ["Map and the inevitable Option", `val phoneBook = Map(
+      ["Map", `val phoneBook: Map[String, String] = Map(
   "Alice" -> "555-0001",
   "Bob"   -> "555-0002"
 )
 
-val alice  = phoneBook.get("Alice")    // Some(555-0001)
-val nobody = phoneBook.get("Carol")    // None
+// Lookup returns Option (no NoSuchElementException)
+phoneBook.get("Alice")                       // Some(555-0001)
+phoneBook.get("Carol")                       // None
+phoneBook.getOrElse("Carol", "?")            // "?"
 
-println(alice)
-println(nobody)
-println(alice.getOrElse("unknown"))    // 555-0001
-println(nobody.getOrElse("unknown"))   // unknown`],
+// Add / remove returns a new Map (immutable)
+phoneBook + ("Carol" -> "555-0003")          // Map with Carol added
+phoneBook - "Bob"                            // Map without Bob
 
-      ["Option(...) at the Java boundary", `// Java APIs often return null. Wrap them at the seam.
+// Iteration: each entry is a (key, value) tuple
+phoneBook.foreach { case (name, num) => println(s"$name: $num") }
+
+// Higher-order ops with destructuring
+phoneBook.map { case (k, v) => k -> v.replaceAll("\\\\d", "*") }`],
+
+      ["Set", `val a: Set[Int] = Set(1, 2, 3, 4)
+val b: Set[Int] = Set(3, 4, 5, 6)
+
+// Set algebra
+a.union(b)                  // Set(1, 2, 3, 4, 5, 6)
+a.intersect(b)              // Set(3, 4)
+a.diff(b)                   // Set(1, 2)
+
+// Membership in O(1)
+a.contains(3)               // true
+a(3)                        // true — a Set is a function from element to Boolean
+
+// Adding / removing returns new Sets
+a + 5                       // Set(1, 2, 3, 4, 5)
+a - 1                       // Set(2, 3, 4)
+
+// distinct on a sequence uses a Set internally
+List(1, 1, 2, 2, 3).distinct   // List(1, 2, 3)`],
+
+      ["Range", `// Inclusive / exclusive / stepped
+val incl: Range      = 1 to 5         // 1, 2, 3, 4, 5
+val excl: Range      = 1 until 5      // 1, 2, 3, 4
+val byTwos: Range    = 1 to 10 by 2   // 1, 3, 5, 7, 9
+val countdown: Range = 10 to 1 by -1
+
+incl.toList         // List(1, 2, 3, 4, 5)
+excl.toList         // List(1, 2, 3, 4)
+byTwos.toList       // List(1, 3, 5, 7, 9)
+countdown.toList    // List(10, 9, 8, 7, 6, 5, 4, 3, 2, 1)
+
+// Ranges are collections, so the usual ops apply
+(1 to 100).sum                     // 5050
+(1 to 5).map(n => n * n).toList    // List(1, 4, 9, 16, 25)`],
+
+      ["LazyList", `// LazyList: like a List, but each element is computed only when accessed (and then cached).
+val nats: LazyList[Int] = LazyList.from(1)
+
+// Take only what you need from an "infinite" sequence
+nats.map(n => n * n).take(10).toList   // List(1, 4, 9, ..., 100)
+
+// Useful when computation per element is expensive — only paid for what's accessed
+val expensive: LazyList[Int] = LazyList.from(1).map { n =>
+  println(s"computing $n")             // side effect to demonstrate laziness
+  n * 2
+}
+val firstThree: List[Int] = expensive.take(3).toList   // computes 1, 2, 3
+
+// Cached: a second access doesn't recompute
+firstThree                             // (no "computing" output this time)`],
+
+      ["Option", `val present: Option[Int] = Some(42)
+val absent:  Option[Int] = None
+
+// Provide a default if you need one
+present.getOrElse(0)             // 42
+absent.getOrElse(0)              // 0
+
+// map / flatMap chain safely; None short-circuits
+present.map(_ * 2)               // Some(84)
+absent.map(_ * 2)                // None
+
+// for-comprehension over multiple Options
+val combined: Option[Int] = for
+  a <- present
+  b <- Option(10)
+yield a + b
+combined                         // Some(52)
+
+// Option(...) at the Java boundary — null becomes None
 val maybeNull: String = null
-val safe: Option[String]    = Option(maybeNull)   // None
-val present: Option[String] = Option("hello")     // Some(hello)
+Option(maybeNull)                // None
+Option("hello")                  // Some(hello)
 
-println(safe)
-println(present)
+// Pattern matching
+def describe(o: Option[Int]): String = o match
+  case Some(n) => s"got $n"
+  case None    => "nothing"
+describe(present)                // "got 42"
+describe(absent)                 // "nothing"`],
 
-val length = Option(maybeNull).map(_.length).getOrElse(0)
-println(length)   // 0`],
-
-      ["Java interop — asScala / asJava", `import scala.jdk.CollectionConverters.*
-
-val javaList = new java.util.ArrayList[String]()
-javaList.add("a"); javaList.add("b")
-
-val scalaList: List[String] = javaList.asScala.toList
-println(scalaList)   // List(a, b)
-
-val javaSet: java.util.Set[Int] = Set(1, 2, 3).asJava
-println(javaSet)
-
-import scala.jdk.OptionConverters.*
-val jopt: java.util.Optional[String] = java.util.Optional.of("hi")
-val asScalaOpt: Option[String] = jopt.toScala
-println(asScalaOpt)   // Some(hi)`],
-
-      ["Set and uniqueness", `val a = Set(1, 2, 3, 4)
-val b = Set(3, 4, 5, 6)
-
-println(a.union(b))         // Set(1, 2, 3, 4, 5, 6)
-println(a.intersect(b))     // Set(3, 4)
-println(a.diff(b))          // Set(1, 2)
-
-val withDupes = List(1, 1, 2, 2, 3)
-println(withDupes.distinct) // List(1, 2, 3)`],
-
-      ["mkString", `val nums = List(1, 2, 3, 4)
-
-println(nums.mkString)                  // 1234
-println(nums.mkString(", "))            // 1, 2, 3, 4
-println(nums.mkString("[", ", ", "]"))  // [1, 2, 3, 4]`],
-
-      ["Ranges", `val incl   = 1 to 5      // 1, 2, 3, 4, 5
-val excl   = 1 until 5   // 1, 2, 3, 4
-val byTwos = 1 to 10 by 2
-
-println(incl.toList)
-println(excl.toList)
-println(byTwos.toList)
-
-val sumOfFirst100 = (1 to 100).sum
-println(sumOfFirst100)   // 5050`],
-
-      ["Vector vs List", `// List: fast prepend, slow random access.
-val list = List(1, 2, 3, 4, 5)
-val prepended = 0 :: list                  // O(1)
-
-// Vector: balanced for most operations.
-val vec = Vector(1, 2, 3, 4, 5)
-val updated  = vec.updated(2, 99)          // O(log n)
-val accessed = vec(2)                      // O(log n)
-
-println(prepended)   // List(0, 1, 2, 3, 4, 5)
-println(updated)     // Vector(1, 2, 99, 4, 5)
-println(accessed)    // 3
-
-// Rule of thumb: List for sequential access from the front; Vector for everything else.`],
-
-      ["Either in a for", `def parseInt(s: String): Either[String, Int] =
+      ["Either", `def parseInt(s: String): Either[String, Int] =
   s.toIntOption.toRight(s"not a number: $s")
 
 def positive(n: Int): Either[String, Int] =
   if n > 0 then Right(n) else Left(s"not positive: $n")
 
-val result = for
+// Either short-circuits on Left, like Option does on None
+val good: Either[String, Int] = for
   a <- parseInt("12")
   b <- parseInt("3")
-  c <- positive(a - b * 100)
+  c <- positive(a + b)
 yield c
+good                             // Right(15)
 
-println(result)   // Left(not positive: -288)`],
+val bad: Either[String, Int] = for
+  a <- parseInt("12")
+  b <- parseInt("3")
+  c <- positive(a - b * 100)     // -288, fails the positive check
+yield c
+bad                              // Left(not positive: -288)
 
-      ["sortBy meets Ordering", `case class Person(name: String, age: Int)
+// Pattern match
+def render(r: Either[String, Int]): String = r match
+  case Right(n) => s"ok: $n"
+  case Left(e)  => s"err: $e"
+render(good)                     // "ok: 15"
+render(bad)                      // "err: not positive: -288"`],
 
-val people = List(
-  Person("Alice", 30),
-  Person("Bob",   25),
-  Person("Carol", 35)
-)
-
-val byAge     = people.sortBy(_.age)       // Ordering[Int] picked up implicitly
-val byName    = people.sortBy(_.name)      // Ordering[String] picked up implicitly
-val byAgeDesc = people.sortBy(-_.age)
-
-byAge.foreach(println)
-println("---")
-byName.foreach(println)`],
-
-      ["A List of case classes", `case class Sale(product: String, price: Double, units: Int)
-
-val sales = List(
-  Sale("apple", 1.0, 50),
-  Sale("bread", 3.5, 20),
-  Sale("apple", 1.0, 30),
-  Sale("bread", 3.5, 10),
-  Sale("milk",  2.5, 40)
-)
-
-val totalRevenue = sales.map(s => s.price * s.units).sum
-println(s"total: $$$totalRevenue")
-
-val byProduct = sales
-  .groupBy(_.product)
-  .view
-  .mapValues(_.map(s => s.price * s.units).sum)
-  .toMap
-
-byProduct.toList.sortBy(-_._2).foreach { case (p, r) => println(s"$p: $$$r") }`],
-
-      ["A List of sum types", `sealed trait Shape
-case class Circle(radius: Double)                  extends Shape
-case class Rectangle(width: Double, height: Double) extends Shape
-case class Triangle(base: Double, height: Double)   extends Shape
-
-def area(s: Shape): Double = s match
-  case Circle(r)        => math.Pi * r * r
-  case Rectangle(w, h)  => w * h
-  case Triangle(b, h)   => 0.5 * b * h
-
-val shapes: List[Shape] = List(Circle(2), Rectangle(3, 4), Triangle(5, 6))
-val total = shapes.map(area).sum
-println(f"total area: $total%.2f")`],
-
-      ["Lazy when it matters — LazyList", `// Each element computed on demand and cached.
-val nats: LazyList[Int] = LazyList.from(1)
-
-val firstTenSquares = nats.map(n => n * n).take(10).toList
-println(firstTenSquares)   // List(1, 4, 9, ..., 100)
-
-val expensive = LazyList.from(1).map { n =>
-  println(s"computing $n")
-  n * 2
-}
-val firstThree = expensive.take(3).toList
-println(firstThree)`],
-
-      ["fold as a generalization", `val nums = List(1, 2, 3, 4, 5)
-
-val sum     = nums.foldLeft(0)(_ + _)
-val product = nums.foldLeft(1)(_ * _)
-println(sum)       // 15
-println(product)   // 120
-
-val letters = "hello world".toList.filter(_.isLetter)
-val charCount = letters.foldLeft(Map.empty[Char, Int]) { (acc, c) =>
-  acc.updated(c, acc.getOrElse(c, 0) + 1)
-}
-println(charCount)`],
-
-      ["Future and the same shape", `import scala.concurrent.{Future, Await}
+      ["Future", `import scala.concurrent.{Future, Await}
 import scala.concurrent.duration.*
 import scala.concurrent.ExecutionContext.Implicits.global
 
 def fetch(id: Int): Future[String] = Future {
-  Thread.sleep(50)
+  Thread.sleep(50)             // simulate I/O
   s"result-$id"
 }
 
+// Same shape as Option/Either: flatMap chains, for-comprehension, etc.
 val combined: Future[String] = for
   a <- fetch(1)
   b <- fetch(2)
 yield s"$a + $b"
 
-val result = Await.result(combined, 1.second)
-println(result)   // result-1 + result-2`],
+// Run several in parallel and collect the results
+val parallel: Future[Seq[String]] =
+  Future.sequence(List(fetch(3), fetch(4), fetch(5)))
+
+// Block at the boundary if you must (avoid this in real request handlers)
+Await.result(combined, 1.second)   // result-1 + result-2
+Await.result(parallel, 1.second)   // List(result-3, result-4, result-5)`],
+
+      ["Seq / Iterable with varargs", `// Seq: the abstract trait for ordered collections (List, Vector, ArraySeq, ...)
+val s: Seq[Int] = List(1, 2, 3)
+val v: Seq[Int] = Vector(1, 2, 3)
+
+// Iterable: even more abstract — covers Seq, Set, Map (anything you can iterate)
+val all: Iterable[Int] = Set(1, 2, 3)
+all.foreach(println)
+
+// Varargs: a method that accepts any number of arguments, seen as a Seq inside
+def sum(xs: Int*): Int = xs.sum
+sum(1, 2, 3, 4)                  // 10
+sum()                            // 0
+
+// Expanding an existing Seq into varargs with * (Scala 3) / : _* (Scala 2)
+val nums = List(10, 20, 30)
+sum(nums*)                       // 60
+
+// Functions that take Seq are flexible about input type
+def describe(xs: Seq[Any]): String = xs.mkString("[", ", ", "]")
+describe(List("a", "b"))         // "[a, b]"
+describe(Vector(1, 2, 3))        // "[1, 2, 3]"`],
+
+      ["Any — top of the type hierarchy", `// Any: every value in Scala is-an Any.
+val anything: List[Any] = List(1, "two", true, 3.14)
+anything.foreach { a =>
+  println(s"\${a.getClass.getSimpleName}: $a")
+}
+
+// The two branches just below Any:
+val v: AnyVal = 42                  // value types (Int, Boolean, Double, ...)
+val r: AnyRef = "hello"             // reference types (everything else on the JVM)
+
+// Useful when you genuinely need to hold heterogeneous values, but usually a
+// code smell — most "Any" can be a sealed trait or a generic type parameter.`],
+
+      ["Nothing — bottom of the type hierarchy", `// Nothing has no inhabitants. It's the inferred type of expressions that don't return:
+//   - throw new ...
+//   - ??? (the standard "TODO" placeholder)
+//   - infinite loops
+def todo(): Nothing = ???
+def boom(): Nothing = throw new RuntimeException("boom")
+
+// Because Nothing is a subtype of every type, a Nothing expression can stand
+// in anywhere. That's how this type-checks (the else branch has type Nothing):
+val xs: List[Int] = if true then List(1, 2, 3) else throw new Exception("nope")
+xs                           // List(1, 2, 3)
+
+// It's also why Nil works for any element type: Nil is List[Nothing],
+// and List[Nothing] is a subtype of every List[T].
+val emptyList: List[Nothing] = Nil
+val asInts: List[Int] = emptyList
+val asStrs: List[String] = emptyList`],
+
+      ["Mutable on the inside, immutable on the outside", `import scala.collection.mutable
+
+// ArrayBuffer: like Java's ArrayList. Fast appends, indexed access.
+def collectMatching(xs: Seq[Int], pred: Int => Boolean): List[Int] = {
+  val buf = mutable.ArrayBuffer.empty[Int]
+  for x <- xs if pred(x) do
+    buf += x
+  buf.toList
+}
+collectMatching(1 to 10, _ % 3 == 0)   // List(3, 6, 9)
+
+// mutable.Map for fast incremental updates, returning immutable at the boundary
+def charCount(s: String): Map[Char, Int] = {
+  val counts = mutable.Map.empty[Char, Int].withDefaultValue(0)
+  for c <- s if c.isLetter do
+    counts(c) += 1
+  counts.toMap
+}
+charCount("hello world")              // Map(h -> 1, e -> 1, l -> 3, ...)`],
 
       ["@tailrec — recursion that won't blow the stack", `import scala.annotation.tailrec
 
@@ -324,36 +336,27 @@ def sumSafe(xs: List[Int], acc: Int = 0): Int = xs match
   case Nil       => acc
   case x :: rest => sumSafe(rest, acc + x)
 
-println(sumSafe(List(1, 2, 3, 4, 5)))     // 15
-println(sumSafe((1 to 100000).toList))    // safe on long inputs`],
+sumSafe(List(1, 2, 3, 4, 5))          // 15
+sumSafe((1 to 100000).toList)         // safe on long inputs`],
 
-      ["@switch — hint the compiler to make a fast jump table", `import scala.annotation.switch
+      ["Java interop", `import scala.jdk.CollectionConverters.*
 
-// On a match over a constant Int/Char/Byte/Short, @switch asks the
-// compiler to emit a tableswitch (a constant-time jump) instead of
-// chained comparisons. If the match isn't eligible, it warns at compile time.
-def name(d: Int): String = (d: @switch) match
-  case 0 => "zero"
-  case 1 => "one"
-  case 2 => "two"
-  case 3 => "three"
-  case _ => "many"
+// Java collection -> Scala
+val javaList = new java.util.ArrayList[String]()
+javaList.add("a")
+javaList.add("b")
+javaList.asScala.toList               // List(a, b)
 
-println(name(2))   // two
-println(name(9))   // many`],
+// Scala -> Java
+Set(1, 2, 3).asJava                   // [1, 2, 3]
 
-      ["Mutable on the inside, immutable on the outside", `import scala.collection.mutable
+// java.util.Optional <-> scala.Option
+import scala.jdk.OptionConverters.*
+val jopt: java.util.Optional[String] = java.util.Optional.of("hi")
+jopt.toScala                          // Some(hi)
 
-// A small, controlled use of mutable: fast incremental work
-// inside a function, returning an immutable result at the boundary.
-def charCount(s: String): Map[Char, Int] = {
-  val counts = mutable.Map.empty[Char, Int].withDefaultValue(0)
-  for c <- s if c.isLetter do
-    counts(c) += 1
-  counts.toMap   // hand back something immutable
-}
-
-println(charCount("hello world"))   // Map(h -> 1, e -> 1, l -> 3, ...)`],
+// Most Java types and methods just work
+java.time.Instant.now()               // 2026-...`],
     ];
 
     const ol = document.getElementById("snippets");
