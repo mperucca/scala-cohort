@@ -62,7 +62,7 @@
 
     function buildPrompt(url, data) {
       const lang = formatVersion(data?.family, data?.scalaVersion);
-      const header = `Please explain what this snippet is teaching, what the gotcha is, and what idiomatic Scala would look like. The code below is written in ${lang}.`;
+      const header = `This snippet is intentionally flawed in some subtle way to teach a Scala concept. Please explain the concept it's teaching, identify what's wrong, and show what idiomatic Scala would look like. The code below is written in ${lang}.`;
       if (data?.code) return `${header}\n\nSource:\n\`\`\`scala\n${data.code}\n\`\`\``;
       return `${header}\n\nSource (Scastie): ${url}\n\n(Note: the code itself is on the Scastie page; I couldn't inline it.)`;
     }
@@ -137,7 +137,7 @@
       const askAi = document.createElement("button");
       askAi.type = "button";
       askAi.className = "pill ask-ai";
-      askAi.textContent = "Ask GPT";
+      askAi.textContent = "Ask ChatGPT";
       askAi.title = "Open AI chat with this snippet prefilled";
       askAi.addEventListener("click", async (e) => {
         e.stopPropagation();
@@ -146,7 +146,7 @@
         const prompt = buildPrompt(url, data);
         const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
         window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
-        askAi.textContent = "Ask GPT";
+        askAi.textContent = "Ask ChatGPT";
       });
       actions.appendChild(askAi);
 

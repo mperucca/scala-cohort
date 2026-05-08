@@ -135,7 +135,7 @@
       const askAi = document.createElement("button");
       askAi.type = "button";
       askAi.className = "pill ask-ai";
-      askAi.textContent = "Ask GPT";
+      askAi.textContent = "Ask ChatGPT";
       askAi.title = "Open AI chat with this snippet prefilled";
       askAi.addEventListener("click", async (e) => {
         e.stopPropagation();
@@ -144,7 +144,7 @@
         const prompt = buildPrompt(url, data);
         const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
         window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
-        askAi.textContent = "Ask GPT";
+        askAi.textContent = "Ask ChatGPT";
       });
       actions.appendChild(askAi);
 
