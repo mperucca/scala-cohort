@@ -8,7 +8,9 @@
     body { background: #1e1e2e; color: #cdd6f4; padding: 2rem; font-family: sans-serif; }
     ol { counter-reset: items; list-style: none; padding-left: 0; }
     li { counter-increment: items; display: flex; align-items: flex-start; gap: 0.75rem; margin-bottom: 0.5rem; }
-    li::before { content: counter(items); min-width: 1.8rem; height: 1.8rem; background: #313244; border: 1px solid #585b70; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #89b4fa; flex-shrink: 0; margin-top: 0.25rem; }
+    li::before { content: counter(items); min-width: 1.8rem; height: 1.8rem; background: #313244; border: 1px solid #585b70; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; color: #89b4fa; flex-shrink: 0; margin-top: 0.25rem; transition: background 0.15s, color 0.15s, border-color 0.15s; }
+    li.understood::before { background: #a6e3a1; color: #1e1e2e; border-color: #a6e3a1; }
+    li.revisit::before { background: #f9e2af; color: #1e1e2e; border-color: #f9e2af; }
     details { flex: 1; min-width: 0; }
     .iframe-wrap { width: 100%; height: 50vh; margin-top: 0.5rem; display: flex; flex-direction: column; }
     iframe { width: 100%; flex: 1; display: block; min-height: 0; }
@@ -28,15 +30,35 @@
     .popout:hover { background: #89b4fa; color: #1e1e2e; }
     .ask-ai { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
     .ask-ai:hover { background: #a6e3a1; color: #1e1e2e; }
+    .understood-btn { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
+    .understood-btn:hover { background: #45475a; }
+    .understood-btn.active, .understood-btn.active:hover { background: #a6e3a1; color: #1e1e2e; }
+    .revisit-btn { color: #f9e2af; border-color: #f9e2af; font-family: inherit; }
+    .revisit-btn:hover { background: #45475a; }
+    .revisit-btn.active, .revisit-btn.active:hover { background: #f9e2af; color: #1e1e2e; }
+    .progress-bar { color: #a6adc8; font-size: 0.85rem; margin: 0 0 1.25rem 0; max-width: 60rem; }
+    .progress-bar .pct { color: #cdd6f4; font-weight: 600; }
+    .progress-bar .revisit-count { color: #f9e2af; }
+    .progress-bar .clear-link { background: transparent; border: none; color: #6c7086; cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
+    .progress-bar .clear-link:hover { color: #cdd6f4; }
   </style>
 </head>
 <body>
   <h1>Constructs</h1>
   <p style="color:#a6adc8;font-size:0.95rem;line-height:1.5;margin:0 0 1.5rem 0;max-width:60rem;">Where the object-oriented side of Scala shows up. Functional programming brings a valuable inclusion though.</p>
+  <p id="progress-bar" class="progress-bar"></p>
   <ol id="snippets"></ol>
 
   <script>
     const base = "https://scastie.scala-lang.org/";
+    const STORAGE_KEY = "scala-cohort:lesson-6";
+    function loadStates() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {}; }
+      catch { return {}; }
+    }
+    function saveStates(states) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(states));
+    }
 
     async function fetchSnippetData(id) {
       try {
@@ -88,6 +110,38 @@
       ["k4fX17AZQZuInesemcBQmg", "This type class construct is intriguing."],
     ];
 
+    const states = loadStates();
+
+    const applyStatusFns = [];
+
+    function clearProgress() {
+      if (!confirm("Clear all progress for this lesson?")) return;
+      for (const k of Object.keys(states)) delete states[k];
+      saveStates(states);
+      applyStatusFns.forEach(fn => fn());
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const bar = document.getElementById("progress-bar");
+      if (!bar) return;
+      const total = snippets.length;
+      let understood = 0, revisit = 0;
+      for (const [id] of snippets) {
+        if (states[id] === "understood") understood++;
+        else if (states[id] === "revisit") revisit++;
+      }
+      const parts = [`<span class="pct">${understood} / ${total}</span> understood`];
+      if (revisit > 0) parts.push(`<span class="revisit-count">${revisit} to revisit</span>`);
+      let html = parts.join(" &middot; ");
+      if (understood > 0 || revisit > 0) {
+        html += ` &middot; <button type="button" class="clear-link">clear progress</button>`;
+      }
+      bar.innerHTML = html;
+      const clearBtn = bar.querySelector(".clear-link");
+      if (clearBtn) clearBtn.addEventListener("click", clearProgress);
+    }
+
     const ol = document.getElementById("snippets");
     snippets.forEach(([id, title]) => {
       const url = base + id;
@@ -125,6 +179,43 @@
       const actions = document.createElement("span");
       actions.className = "summary-actions";
 
+      const li = document.createElement("li");
+
+      const understoodBtn = document.createElement("button");
+      understoodBtn.type = "button";
+      understoodBtn.className = "pill understood-btn";
+      understoodBtn.textContent = "✓ Understood";
+      understoodBtn.title = "Mark as understood";
+
+      const revisitBtn = document.createElement("button");
+      revisitBtn.type = "button";
+      revisitBtn.className = "pill revisit-btn";
+      revisitBtn.textContent = "↺ Revisit";
+      revisitBtn.title = "Mark for revisit";
+
+      function applyStatus() {
+        const s = states[id];
+        understoodBtn.classList.toggle("active", s === "understood");
+        revisitBtn.classList.toggle("active", s === "revisit");
+        li.classList.remove("understood", "revisit");
+        if (s) li.classList.add(s);
+      }
+      applyStatus();
+      applyStatusFns.push(applyStatus);
+
+      function setState(newState) {
+        states[id] = (states[id] === newState) ? undefined : newState;
+        if (!states[id]) delete states[id];
+        saveStates(states);
+        applyStatus();
+        updateProgress();
+      }
+
+      understoodBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("understood"); });
+      revisitBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("revisit"); });
+      actions.appendChild(understoodBtn);
+      actions.appendChild(revisitBtn);
+
       const popout = document.createElement("a");
       popout.href = url;
       popout.target = "_blank";
@@ -154,10 +245,11 @@
       details.appendChild(summary);
       details.appendChild(wrap);
       details.appendChild(btn);
-      const li = document.createElement("li");
       li.appendChild(details);
       ol.appendChild(li);
     });
+
+    updateProgress();
   </script>
 </body>
 </html>
