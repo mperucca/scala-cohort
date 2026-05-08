@@ -23,13 +23,14 @@
     summary:hover { background: #45475a; }
     .summary-title { flex: 1; min-width: 0; }
     .summary-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
-    .reset { background: #313244; color: #cdd6f4; border: 1px solid #585b70; border-radius: 4px; padding: 0.2rem 0.5rem; cursor: pointer; font-size: 0.85rem; margin-top: 0.4rem; display: block; }
+    .reset { background: #313244; color: #cdd6f4; border: 1px solid #585b70; border-radius: 4px; padding: 0.2rem 0.5rem; cursor: pointer; font-size: 0.85rem; }
     .reset:hover { background: #45475a; }
+    .snippet-tools { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
     .pill { padding: 0.15rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; line-height: 1.2; cursor: pointer; border: 1px solid; background: #45475a; }
     .popout { color: #89b4fa; border-color: #89b4fa; }
     .popout:hover { background: #89b4fa; color: #1e1e2e; }
-    .ask-ai { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
-    .ask-ai:hover { background: #a6e3a1; color: #1e1e2e; }
+    .ask-ai { color: #cba6f7; border-color: #cba6f7; font-family: inherit; }
+    .ask-ai:hover { background: #cba6f7; color: #1e1e2e; }
     .understood-btn { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
     .understood-btn:hover { background: #45475a; }
     .understood-btn.active, .understood-btn.active:hover { background: #a6e3a1; color: #1e1e2e; }
@@ -168,7 +169,7 @@
       wrap.appendChild(handle);
       const btn = document.createElement("button");
       btn.className = "reset";
-      btn.textContent = "↺ Reset";
+      btn.textContent = "Reset";
       btn.addEventListener("click", () => { iframe.src = url; });
       const details = document.createElement("details");
       details.addEventListener("toggle", () => {
@@ -217,17 +218,6 @@
 
       understoodBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("understood"); });
       revisitBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("revisit"); });
-      actions.appendChild(understoodBtn);
-      actions.appendChild(revisitBtn);
-
-      const popout = document.createElement("a");
-      popout.href = url;
-      popout.target = "_blank";
-      popout.textContent = "Open ↗";
-      popout.className = "pill popout";
-      popout.title = "Open Scastie in new tab";
-      popout.addEventListener("click", (e) => e.stopPropagation());
-      actions.appendChild(popout);
 
       const askAi = document.createElement("button");
       askAi.type = "button";
@@ -244,11 +234,27 @@
         askAi.textContent = "Ask ChatGPT";
       });
       actions.appendChild(askAi);
+      actions.appendChild(understoodBtn);
+      actions.appendChild(revisitBtn);
 
       summary.appendChild(actions);
       details.appendChild(summary);
       details.appendChild(wrap);
-      details.appendChild(btn);
+
+      const tools = document.createElement("div");
+      tools.className = "snippet-tools";
+      tools.appendChild(btn);
+
+      const popout = document.createElement("a");
+      popout.href = url;
+      popout.target = "_blank";
+      popout.textContent = "Open in new tab ↗";
+      popout.className = "pill popout";
+      popout.title = "Open Scastie in new tab";
+      popout.addEventListener("click", (e) => e.stopPropagation());
+      tools.appendChild(popout);
+
+      details.appendChild(tools);
       li.appendChild(details);
       ol.appendChild(li);
     });
