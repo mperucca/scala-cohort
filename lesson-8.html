@@ -87,7 +87,7 @@
 
     function buildPrompt(url, data) {
       const lang = formatVersion(data?.family, data?.scalaVersion);
-      const header = `This snippet teaches a Scala concept through something subtly flawed or surprising. Please explain the concept, identify the surprise (a compile error, an unexpected output, or behavior that contradicts a common assumption), and show what idiomatic Scala would look like. The code below is written in ${lang}.`;
+      const header = `This snippet is from a lesson on Scala's syntactic sugar. It either uses long-form/explicit syntax that has a sweeter equivalent or tries to use the syntactic sugar but misses something. Identify the syntactic-sugar feature at play, point out what's happening (the cleaner form or what the attempt is missing), and show what idiomatic Scala would look like. The code below is written in ${lang}.`;
       if (data?.code) return `${header}\n\nSource:\n\`\`\`scala\n${data.code}\n\`\`\``;
       return `${header}\n\nSource (Scastie): ${url}\n\n(Note: the code itself is on the Scastie page; I couldn't inline it.)`;
     }
