@@ -13,28 +13,38 @@
     li.understood::before { background: #a6e3a1; color: #1e1e2e; border-color: #a6e3a1; }
     li.revisit::before { background: #f9e2af; color: #1e1e2e; border-color: #f9e2af; }
     details { flex: 1; min-width: 0; }
-    .iframe-wrap { width: 100%; height: 50vh; margin-top: 0.5rem; display: flex; flex-direction: column; }
-    iframe { width: 100%; flex: 1; display: block; min-height: 0; }
-    .drag-handle { height: 6px; background: #45475a; cursor: ns-resize; flex-shrink: 0; }
-    .drag-handle:hover { background: #585b70; }
+    .iframe-pair { display: flex; gap: 0.5rem; width: 100%; height: 60vh; margin-top: 0.5rem; }
+    .iframe-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .iframe-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    iframe { width: 100%; flex: 1; display: block; min-height: 0; border: 0; }
+    .iframe-reveal-btn { flex: 1; background: #313244; border: 1px dashed #585b70; border-radius: 6px; color: #89dceb; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .iframe-reveal-btn:hover { background: #45475a; border-color: #89dceb; }
+    .explanation-details { margin-top: 0.5rem; }
+    .explanation-summary { cursor: pointer; padding: 0.4rem 0.7rem; background: #181825; border: 1px solid #313244; border-radius: 6px; color: #89dceb; font-size: 0.85rem; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 0.5rem; user-select: none; }
+    .explanation-summary::before { content: "▶"; font-size: 0.7rem; transition: transform 0.15s; }
+    .explanation-details[open] > .explanation-summary::before { transform: rotate(90deg); }
+    .explanation-details[open] > .explanation-summary { border-radius: 6px 6px 0 0; border-bottom: 0; }
+    .explanation-summary:hover { background: #1e1e2e; }
+    .explanation-panel { background: #181825; border: 1px solid #313244; border-top: 0; border-radius: 0 0 6px 6px; padding: 1rem; color: #cdd6f4; line-height: 1.55; font-size: 0.9rem; }
+    .explanation-panel p { margin: 0 0 0.75rem 0; }
+    .explanation-panel p:last-child { margin-bottom: 0; }
+    .explanation-panel code { background: #313244; padding: 0.1rem 0.3rem; border-radius: 3px; font-family: ui-monospace, Menlo, monospace; font-size: 0.85em; }
     summary { cursor: pointer; padding: 0.5rem 0.8rem; border-radius: 6px; list-style: none; display: flex; align-items: center; gap: 0.5rem; background: #313244; border: 1px solid #585b70; user-select: none; }
     summary::before { content: "▶"; font-size: 0.75rem; color: #89b4fa; transition: transform 0.15s; flex-shrink: 0; }
     details[open] > summary::before { transform: rotate(90deg); }
     details[open] > summary { border-color: #89b4fa; }
     summary:hover { background: #45475a; }
     .summary-title { flex: 1; min-width: 0; }
-    .summary-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
-    .reset { background: #313244; color: #cdd6f4; border: 1px solid #585b70; border-radius: 4px; padding: 0.2rem 0.5rem; cursor: pointer; font-size: 0.85rem; }
-    .reset:hover { background: #45475a; }
+    .reset { background: #45475a; color: #cdd6f4; border: 1px solid #585b70; border-radius: 4px; padding: 0.15rem 0.5rem; cursor: pointer; font-size: 0.8rem; font-weight: 600; line-height: 1.2; font-family: inherit; }
+    .reset:hover { background: #585b70; }
     .snippet-tools { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
     .pill { padding: 0.15rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; line-height: 1.2; cursor: pointer; border: 1px solid; background: #45475a; }
-    .popout { color: #89b4fa; border-color: #89b4fa; }
-    .popout:hover { background: #89b4fa; color: #1e1e2e; }
-    .copy-link-btn { color: #94e2d5; border-color: #94e2d5; font-family: inherit; }
-    .copy-link-btn:hover { background: #94e2d5; color: #1e1e2e; }
+    .copy-link-icon { background: transparent; border: none; color: #94e2d5; cursor: pointer; font-size: 1rem; padding: 0.15rem 0.4rem; line-height: 1; opacity: 0.65; flex-shrink: 0; font-family: inherit; }
+    .copy-link-icon:hover { opacity: 1; }
     .ask-ai { color: #cba6f7; border-color: #cba6f7; font-family: inherit; }
     .ask-ai:hover { background: #cba6f7; color: #1e1e2e; }
     .understood-btn { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
+    .marks-row { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
     .understood-btn:hover { background: #45475a; }
     .understood-btn.active, .understood-btn.active:hover { background: #a6e3a1; color: #1e1e2e; }
     .revisit-btn { color: #f9e2af; border-color: #f9e2af; font-family: inherit; }
@@ -86,35 +96,98 @@
       return "Scala";
     }
 
-    function buildPrompt(url, data) {
+    function buildPrompt(url, data, customPrompt) {
       const lang = formatVersion(data?.family, data?.scalaVersion);
-      const header = `This snippet teaches a Scala concept through something subtly flawed or surprising. Please explain the concept, identify the surprise (a compile error, an unexpected output, or behavior that contradicts a common assumption), and show what idiomatic Scala would look like. The code below is written in ${lang}.`;
+      const header = `${customPrompt} The code below is written in ${lang}.`;
       if (data?.code) return `${header}\n\nSource:\n\`\`\`scala\n${data.code}\n\`\`\``;
       return `${header}\n\nSource (Scastie): ${url}\n\n(Note: the code itself is on the Scastie page; I couldn't inline it.)`;
     }
 
+    // Each snippet: [brokenId, title, { workingId, prompt }?]
+    // Snippets without config show broken-only with no AI button (pending customization).
     const snippets = [
-      ["bho0a93ARLWXaWAAMooMcg", "Can't I change my mind?"],
-      ["PkYfU93PTB2r4HGlvrKeGA", "I thought you said I could change my mind."],
-      ["Zq20uGUvQ6GNtrXFUnYi6Q", "Did I just prove `a != a`?"],
-      ["vGEq1bp7SQWIiTbvLucUWQ", "Sometimes `a < b`, sometimes not. Why?"],
-      ["MS9uGLQjT86FQY4mPYKaYg", "I thought `lazy` meant only initializing it once though."],
-      ["tmYWLQxeSzSlV8fnUZ4ahQ", "But weren't they assigned to the same thing?"],
-      ["Zyddcui0SaiVYFuKW0nZ0g", "Do type annotations exist in Scala?"],
-      ["fj2XIovXSmi25rb3v0erGw", "Why doesn't it like the last two? Oh duh."],
-      ["v5ws96PsRj2qF2NrL0I8GQ", "But 1 is a byte..."],
-      ["YFvSBmgdToKTetwYGlbd0Q", "Can you help me fill in the blank? (That's the not neat part. You don't.)"],
-      ["obrE9vRJT3qXiW3kLt8oVQ", "Is 2 not equal to 1?"],
-      ["ayfD7YScTra7GsDcWuwvrw", "But `a` is 1..."],
-      ["6Ld04mdqQUqicyG4Nc5Fsg", "So I just had to say it was my final answer?"],
-      ["jmMTh8dUQBCKXyudBp1TyQ", "Why is `$a+1` rendering weird in my `s\"…\"`?"],
-      ["2H17o1KSQ3eYsEfrwXLyzQ", "But I really want to use `lazy` as a variable name."],
-      ["TsNdRdMgSd2qsMpUJZMeUw", "My Python and TypeScript tuple syntax aren't working."],
-      ["JtvzClqFRRWg3lpQ7jE96A", "Does the field order matter for named tuples?"],
+      ["bho0a93ARLWXaWAAMooMcg", "Can't I change my mind?", {
+        workingId: "F0wshfx6ROeiJ718Q98msA",
+        explanation: `<p><code>val</code> declares an immutable binding — you can't reassign it. Use <code>var</code> if you need to change the value later.</p>`,
+        prompt: "Why doesn't this compile?"
+      }],
+      ["PkYfU93PTB2r4HGlvrKeGA", "I thought you said I could change my mind.", {
+        explanation: `<p><code>var</code> lets you reassign — but only to a value of the same (inferred) type. Here <code>a</code> was inferred as <code>Int</code> from <code>1</code>, so assigning a <code>String</code> is a type error. Mutability isn't the same as type-flexibility.</p>`,
+        prompt: "Why doesn't this compile?"
+      }],
+      ["Zq20uGUvQ6GNtrXFUnYi6Q", "Did I just prove `a != a`?", {
+        workingId: "smpBGzaTTeSTlR7IvMio0A",
+        explanation: `<p><code>def</code> creates a parameterless method that re-evaluates every time it's referenced. So <code>a == a</code> compares two different <code>nanoTime()</code> readings, and the assertion fails. Use <code>val</code> to evaluate once and reuse.</p>`,
+        prompt: "Why does this assertion fail?"
+      }],
+      ["vGEq1bp7SQWIiTbvLucUWQ", "Sometimes `a < b`, sometimes not. Why?", {
+        explanation: `<p><code>a</code> is a <code>def</code>, so each reference re-evaluates <code>System.nanoTime()</code> fresh. <code>b</code> is a <code>lazy val</code>, evaluated on first access and then cached forever. The first <code>println(a &lt; b)</code> reads <code>a</code>, then <code>b</code> initializes (taking a moment), so <code>a &lt; b</code> is true. The second time, <code>a</code> re-reads (a new, later time), but <code>b</code> is the cached earlier value — so <code>a &lt; b</code> is now false.</p>`,
+        prompt: "Why is `a < b` true the first time but false the second?"
+      }],
+      ["MS9uGLQjT86FQY4mPYKaYg", "I thought `lazy` meant only initializing it once though.", {
+        explanation: `<p><code>lazy val</code> caches its value on <strong>successful</strong> initialization. If the init throws, no value gets cached — so the next access retries initialization from scratch. You'll see <code>initializing</code> printed twice, and each <code>try</code> catches the thrown <code>Error</code>.</p>`,
+        prompt: "Why does `initializing` print twice?"
+      }],
+      ["tmYWLQxeSzSlV8fnUZ4ahQ", "But weren't they assigned to the same thing?", {
+        explanation: `<p><code>val a, b = expr</code> is sugar for <code>val a = expr; val b = expr</code> — the expression is evaluated twice, once per binding. Since <code>System.nanoTime()</code> returns a different value each call, <code>a</code> and <code>b</code> end up with different values, and the assertion fails.</p>`,
+        prompt: "Why aren't `a` and `b` equal?"
+      }],
+      ["Zyddcui0SaiVYFuKW0nZ0g", "Do type annotations exist in Scala?", {
+        workingId: "mcbIJeYVTjSf79XbEwOzIQ",
+        explanation: `<p>Scala puts the type annotation <strong>after</strong> the name, separated by a colon: <code>val i: Int = 1</code>. The C/Java style <code>Int val i = 1</code> doesn't parse — Scala's grammar always starts with the declaration keyword (<code>val</code>, <code>var</code>, <code>def</code>).</p>`,
+        prompt: "Where does the type annotation go?"
+      }],
+      ["fj2XIovXSmi25rb3v0erGw", "Why doesn't it like the last two? Oh duh.", {
+        workingId: "zxb4QrzrQi2gQX6HldxZ6w",
+        explanation: `<p>Types must match: the value you assign has to be (or be implicitly convertible to) the declared type. The literal <code>1</code> can be widened at compile time to any numeric type — <code>Int</code>, <code>Long</code>, <code>Short</code>, <code>Byte</code>, <code>Double</code>, <code>Float</code>, even <code>Char</code>. But <code>Boolean</code> and <code>String</code> aren't numeric, so no conversion is available — the compiler rejects those two.</p>`,
+        prompt: "Why does `1` work for `Int`, `Long`, etc. but not `Boolean` or `String`?"
+      }],
+      ["v5ws96PsRj2qF2NrL0I8GQ", "But 1 is a byte...", {
+        workingId: "ihRLBvldSMKJMaIKYsgxSQ",
+        explanation: `<p>Literal-type widening only works on <strong>literals</strong>, not on values. The literal <code>1</code> by itself can become any numeric type at compile time, but once bound to <code>val a</code> (inferred as <code>Int</code>), <code>a</code> is just an <code>Int</code>. Scala allows widening (<code>Int → Long</code>) silently, but narrowing (<code>Int → Byte</code>) requires an explicit conversion like <code>.toByte</code>.</p>`,
+        prompt: "Why does `long` work but not `byte`?"
+      }],
+      ["YFvSBmgdToKTetwYGlbd0Q", "Can you help me fill in the blank? (That's the not neat part. You don't.)", {
+        explanation: `<p>Scala provides literal suffixes for some numeric types — <code>L</code>/<code>l</code> for <code>Long</code>, <code>D</code>/<code>d</code> for <code>Double</code>, <code>F</code>/<code>f</code> for <code>Float</code> — plus alternate bases like <code>0b...</code> (binary), <code>0x...</code> (hex), and exponent notation. But there's no suffix for <code>Byte</code> or <code>Short</code>. You fill in those blanks with a type annotation instead: <code>val byte: Byte = 16</code> (relying on literal-type widening from the previous snippet).</p>`,
+        prompt: "How do I write a `Byte` or `Short` literal?"
+      }],
+      ["obrE9vRJT3qXiW3kLt8oVQ", "Is 2 not equal to 1?", {
+        workingId: "UrdkYXKDTcySCiXaMtCDPg",
+        explanation: `<p><code>1</code> here isn't the value — it's a <strong>literal type</strong>. The type <code>1</code> has exactly one inhabitant: the value <code>1</code>. Assigning <code>2</code> is a type error; <code>2</code> belongs to the type <code>2</code>, not <code>1</code>.</p>`,
+        prompt: "Why doesn't this compile?"
+      }],
+      ["ayfD7YScTra7GsDcWuwvrw", "But `a` is 1...", {
+        workingId: "CcO0hmyBR562ZizsKOcnGA",
+        explanation: `<p><code>val a = 1</code> infers <code>a</code> as <code>Int</code>, not the literal type <code>1</code> — even though the value is <code>1</code>. Scala defaults to the widest reasonable type at inference. To assign <code>a</code> to a <code>val b: 1</code>, <code>a</code> itself must have type <code>1</code> — declare it explicitly: <code>val a: 1 = 1</code>.</p>`,
+        prompt: "Why can't I assign `a` to `b: 1` even though `a` is `1`?"
+      }],
+      ["6Ld04mdqQUqicyG4Nc5Fsg", "So I just had to say it was my final answer?", {
+        explanation: `<p><code>final val</code> makes the binding a compile-time constant — its inferred type is the literal type, not the widened type. So <code>final val a = 1</code> gives <code>a</code> type <code>1</code> (not <code>Int</code>), letting it be assigned to <code>val b: 1</code>. Without <code>final</code>, the inferred type is <code>Int</code>, as in the previous snippet.</p>`,
+        prompt: "Why wouldn't this compile without `final`?"
+      }],
+      ["jmMTh8dUQBCKXyudBp1TyQ", "Why is `$a+1` rendering weird in my `s\"…\"`?", {
+        workingId: "aB3ueRSYTyOZfrCTfpaSGg",
+        explanation: `<p>In <code>s</code>-interpolation, <code>$a</code> injects just the identifier <code>a</code>. Anything after — including <code>+1</code> — is treated as literal text. To inject an expression, wrap it in braces: <code>\${a+1}</code>. So <code>s"$a + 1 = $a+1"</code> becomes <code>1 + 1 = 1+1</code>, not <code>1 + 1 = 2</code>.</p>`,
+        prompt: "Why isn't `$a+1` becoming `2`?"
+      }],
+      ["2H17o1KSQ3eYsEfrwXLyzQ", "But I really want to use `lazy` as a variable name.", {
+        workingId: "m0EMpM1qQjyKTflS0BAD6A",
+        explanation: `<p><code>lazy</code> is a reserved Scala keyword (it's used in <code>lazy val</code>), so it can't be a normal identifier. If you really want it, wrap it in backticks: <code>\`lazy\`</code> — Scala treats anything in backticks as a literal identifier, ignoring its keyword status.</p>`,
+        prompt: "How do I use a reserved word as a variable name?"
+      }],
+      ["TsNdRdMgSd2qsMpUJZMeUw", "My Python and TypeScript tuple syntax aren't working.", {
+        workingId: "pZFBWI7mRyq3CJlSedEVxA",
+        explanation: `<p>Scala tuples use parentheses: <code>(1, false, "move")</code>. Python's bare-comma form (<code>1, false, "move"</code>) and TypeScript/JavaScript's square brackets (<code>[1, true, "love"]</code> — which is an array there) don't work in Scala.</p>`,
+        prompt: "How do I write a tuple in Scala?"
+      }],
+      ["JtvzClqFRRWg3lpQ7jE96A", "Does the field order matter for named tuples?", {
+        workingId: "5KOFThLrQcaELyJtSb2ndQ",
+        explanation: `<p>In Scala 3 named tuples, the field order is part of the type — even when all the field names match, <code>(name: String, iq: Int)</code> and <code>(iq: Int, name: String)</code> are different types. The compiler won't reorder for you; the annotation has to list fields in the same order as the tuple.</p>`,
+        prompt: "Do matching field names alone make these the same type?"
+      }],
     ];
 
     const states = loadStates();
-
     const applyStatusFns = [];
 
     function clearProgress() {
@@ -145,42 +218,84 @@
       if (clearBtn) clearBtn.addEventListener("click", clearProgress);
     }
 
-    const ol = document.getElementById("snippets");
-    snippets.forEach(([id, title], index) => {
-      const url = base + id;
+    function makeIframeColumn(url, { hiddenInitially = false } = {}) {
+      const column = document.createElement("div");
+      column.className = "iframe-column";
+
+
       const iframe = document.createElement("iframe");
       iframe.dataset.src = url;
-      const handle = document.createElement("div");
-      handle.className = "drag-handle";
-      handle.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        const startY = e.clientY;
-        const startH = wrap.offsetHeight;
-        const onMove = (e) => { wrap.style.height = Math.max(100, startH + e.clientY - startY) + "px"; };
-        const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-      });
-      const wrap = document.createElement("div");
-      wrap.className = "iframe-wrap";
-      wrap.appendChild(iframe);
-      wrap.appendChild(handle);
-      const btn = document.createElement("button");
-      btn.className = "reset";
-      btn.textContent = "Reset";
-      btn.addEventListener("click", () => { iframe.src = url; });
+
+      const content = document.createElement("div");
+      content.className = "iframe-content";
+
+      if (hiddenInitially) {
+        const placeholder = document.createElement("button");
+        placeholder.type = "button";
+        placeholder.className = "iframe-reveal-btn";
+        placeholder.textContent = "💡 Reveal";
+        placeholder.title = "Reveal the working version";
+        placeholder.addEventListener("click", (e) => {
+          e.stopPropagation();
+          placeholder.remove();
+          content.appendChild(iframe);
+          if (!iframe.src) iframe.src = url;
+        });
+        content.appendChild(placeholder);
+      } else {
+        content.appendChild(iframe);
+      }
+
+      column.appendChild(content);
+      return { column, iframe };
+    }
+
+
+    const ol = document.getElementById("snippets");
+    snippets.forEach(([id, title, config], index) => {
+      const url = base + id;
+      const workingId = config?.workingId;
+      const workingUrl = workingId ? base + workingId : null;
+      const customPrompt = config?.prompt;
+
+      const hasWorking = !!workingUrl;
+      const hasExplanation = !!config?.explanation;
+      const broken = makeIframeColumn(url);
+      const working = hasWorking
+        ? makeIframeColumn(workingUrl, { hiddenInitially: true })
+        : null;
+
+      const pair = document.createElement("div");
+      pair.className = "iframe-pair";
+      pair.appendChild(broken.column);
+      if (working) pair.appendChild(working.column);
+
       const details = document.createElement("details");
       details.addEventListener("toggle", () => {
-        if (details.open && !iframe.src) iframe.src = url;
+        if (details.open && !broken.iframe.src) broken.iframe.src = url;
       });
+
       const summary = document.createElement("summary");
       const titleSpan = document.createElement("span");
       titleSpan.className = "summary-title";
       titleSpan.textContent = title;
       summary.appendChild(titleSpan);
 
-      const actions = document.createElement("span");
-      actions.className = "summary-actions";
+      const copyLink = document.createElement("button");
+      copyLink.type = "button";
+      copyLink.className = "copy-link-icon";
+      copyLink.textContent = "🔗";
+      copyLink.title = "Copy link to this snippet";
+      copyLink.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const linkUrl = window.location.href.split("#")[0] + `#snippet-${index + 1}`;
+        navigator.clipboard.writeText(linkUrl).then(() => {
+          copyLink.textContent = "✓";
+          setTimeout(() => { copyLink.textContent = "🔗"; }, 1500);
+        });
+      });
+      summary.appendChild(copyLink);
 
       const li = document.createElement("li");
       li.id = `snippet-${index + 1}`;
@@ -216,60 +331,64 @@
       }
 
       understoodBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("understood"); if (states[id] === "understood") details.open = false; });
-      revisitBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("revisit"); });
+      revisitBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("revisit"); if (states[id] === "revisit") details.open = false; });
 
-      const askAi = document.createElement("button");
-      askAi.type = "button";
-      askAi.className = "pill ask-ai";
-      askAi.textContent = "Ask ChatGPT";
-      askAi.title = "Open AI chat with this snippet prefilled";
-      askAi.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        askAi.textContent = "…";
-        const data = await fetchSnippetData(id);
-        const prompt = buildPrompt(url, data);
-        const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
-        window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
-        askAi.textContent = "Ask ChatGPT";
-      });
-      actions.appendChild(askAi);
-      actions.appendChild(understoodBtn);
-      actions.appendChild(revisitBtn);
-
-      summary.appendChild(actions);
       details.appendChild(summary);
-      details.appendChild(wrap);
+      details.appendChild(pair);
 
       const tools = document.createElement("div");
       tools.className = "snippet-tools";
-      tools.appendChild(btn);
 
-      const popout = document.createElement("a");
-      popout.href = url;
-      popout.target = "_blank";
-      popout.textContent = "Open in new tab ↗";
-      popout.className = "pill popout";
-      popout.title = "Open Scastie in new tab";
-      popout.addEventListener("click", (e) => e.stopPropagation());
-      tools.appendChild(popout);
-
-      const copyLink = document.createElement("button");
-      copyLink.type = "button";
-      copyLink.className = "pill copy-link-btn";
-      copyLink.textContent = "🔗 Copy link";
-      copyLink.title = "Copy link to this snippet";
-      copyLink.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const url = window.location.href.split("#")[0] + `#snippet-${index + 1}`;
-        navigator.clipboard.writeText(url).then(() => {
-          const original = copyLink.textContent;
-          copyLink.textContent = "✓ Copied!";
-          setTimeout(() => { copyLink.textContent = original; }, 1500);
+      if (customPrompt) {
+        const askAi = document.createElement("button");
+        askAi.type = "button";
+        askAi.className = "pill ask-ai";
+        askAi.textContent = "Ask ChatGPT";
+        askAi.title = "Open AI chat with the original snippet prefilled";
+        askAi.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          askAi.textContent = "…";
+          const data = await fetchSnippetData(id);
+          const prompt = buildPrompt(url, data, customPrompt);
+          const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
+          window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
+          askAi.textContent = "Ask ChatGPT";
         });
+        tools.appendChild(askAi);
+      }
+
+      let explanationEl = null;
+      if (hasExplanation) {
+        explanationEl = document.createElement("details");
+        explanationEl.className = "explanation-details";
+        const explanationSummary = document.createElement("summary");
+        explanationSummary.className = "explanation-summary";
+        explanationSummary.textContent = "💡 Explanation";
+        const explanationBody = document.createElement("div");
+        explanationBody.className = "explanation-panel";
+        explanationBody.innerHTML = config.explanation;
+        explanationEl.appendChild(explanationSummary);
+        explanationEl.appendChild(explanationBody);
+      }
+
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "reset";
+      resetBtn.textContent = "↻ Reload original code";
+      resetBtn.addEventListener("click", () => {
+        broken.iframe.src = url;
+        if (working && working.iframe && working.iframe.src) working.iframe.src = workingUrl;
       });
-      tools.appendChild(copyLink);
+      tools.appendChild(resetBtn);
 
       details.appendChild(tools);
+      if (explanationEl) details.appendChild(explanationEl);
+
+      const marksRow = document.createElement("div");
+      marksRow.className = "marks-row";
+      marksRow.appendChild(understoodBtn);
+      marksRow.appendChild(revisitBtn);
+      details.appendChild(marksRow);
+
       li.appendChild(details);
       ol.appendChild(li);
     });

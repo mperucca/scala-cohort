@@ -13,28 +13,38 @@
     li.understood::before { background: #a6e3a1; color: #1e1e2e; border-color: #a6e3a1; }
     li.revisit::before { background: #f9e2af; color: #1e1e2e; border-color: #f9e2af; }
     details { flex: 1; min-width: 0; }
-    .iframe-wrap { width: 100%; height: 50vh; margin-top: 0.5rem; display: flex; flex-direction: column; }
-    iframe { width: 100%; flex: 1; display: block; min-height: 0; }
-    .drag-handle { height: 6px; background: #45475a; cursor: ns-resize; flex-shrink: 0; }
-    .drag-handle:hover { background: #585b70; }
+    .iframe-pair { display: flex; gap: 0.5rem; width: 100%; height: 60vh; margin-top: 0.5rem; }
+    .iframe-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .iframe-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+    iframe { width: 100%; flex: 1; display: block; min-height: 0; border: 0; }
+    .iframe-reveal-btn { flex: 1; background: #313244; border: 1px dashed #585b70; border-radius: 6px; color: #89dceb; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .iframe-reveal-btn:hover { background: #45475a; border-color: #89dceb; }
+    .explanation-details { margin-top: 0.5rem; }
+    .explanation-summary { cursor: pointer; padding: 0.4rem 0.7rem; background: #181825; border: 1px solid #313244; border-radius: 6px; color: #89dceb; font-size: 0.85rem; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 0.5rem; user-select: none; }
+    .explanation-summary::before { content: "▶"; font-size: 0.7rem; transition: transform 0.15s; }
+    .explanation-details[open] > .explanation-summary::before { transform: rotate(90deg); }
+    .explanation-details[open] > .explanation-summary { border-radius: 6px 6px 0 0; border-bottom: 0; }
+    .explanation-summary:hover { background: #1e1e2e; }
+    .explanation-panel { background: #181825; border: 1px solid #313244; border-top: 0; border-radius: 0 0 6px 6px; padding: 1rem; color: #cdd6f4; line-height: 1.55; font-size: 0.9rem; }
+    .explanation-panel p { margin: 0 0 0.75rem 0; }
+    .explanation-panel p:last-child { margin-bottom: 0; }
+    .explanation-panel code { background: #313244; padding: 0.1rem 0.3rem; border-radius: 3px; font-family: ui-monospace, Menlo, monospace; font-size: 0.85em; }
     summary { cursor: pointer; padding: 0.5rem 0.8rem; border-radius: 6px; list-style: none; display: flex; align-items: center; gap: 0.5rem; background: #313244; border: 1px solid #585b70; user-select: none; }
     summary::before { content: "▶"; font-size: 0.75rem; color: #89b4fa; transition: transform 0.15s; flex-shrink: 0; }
     details[open] > summary::before { transform: rotate(90deg); }
     details[open] > summary { border-color: #89b4fa; }
     summary:hover { background: #45475a; }
     .summary-title { flex: 1; min-width: 0; }
-    .summary-actions { display: flex; gap: 0.4rem; flex-shrink: 0; }
-    .reset { background: #313244; color: #cdd6f4; border: 1px solid #585b70; border-radius: 4px; padding: 0.2rem 0.5rem; cursor: pointer; font-size: 0.85rem; }
-    .reset:hover { background: #45475a; }
+    .reset { background: #45475a; color: #cdd6f4; border: 1px solid #585b70; border-radius: 4px; padding: 0.15rem 0.5rem; cursor: pointer; font-size: 0.8rem; font-weight: 600; line-height: 1.2; font-family: inherit; }
+    .reset:hover { background: #585b70; }
     .snippet-tools { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.4rem; }
     .pill { padding: 0.15rem 0.5rem; border-radius: 4px; text-decoration: none; font-size: 0.8rem; font-weight: 600; line-height: 1.2; cursor: pointer; border: 1px solid; background: #45475a; }
-    .popout { color: #89b4fa; border-color: #89b4fa; }
-    .popout:hover { background: #89b4fa; color: #1e1e2e; }
-    .copy-link-btn { color: #94e2d5; border-color: #94e2d5; font-family: inherit; }
-    .copy-link-btn:hover { background: #94e2d5; color: #1e1e2e; }
+    .copy-link-icon { background: transparent; border: none; color: #94e2d5; cursor: pointer; font-size: 1rem; padding: 0.15rem 0.4rem; line-height: 1; opacity: 0.65; flex-shrink: 0; font-family: inherit; }
+    .copy-link-icon:hover { opacity: 1; }
     .ask-ai { color: #cba6f7; border-color: #cba6f7; font-family: inherit; }
     .ask-ai:hover { background: #cba6f7; color: #1e1e2e; }
     .understood-btn { color: #a6e3a1; border-color: #a6e3a1; font-family: inherit; }
+    .marks-row { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
     .understood-btn:hover { background: #45475a; }
     .understood-btn.active, .understood-btn.active:hover { background: #a6e3a1; color: #1e1e2e; }
     .revisit-btn { color: #f9e2af; border-color: #f9e2af; font-family: inherit; }
@@ -86,43 +96,106 @@
       return "Scala";
     }
 
-    function buildPrompt(url, data) {
+    function buildPrompt(url, data, customPrompt) {
       const lang = formatVersion(data?.family, data?.scalaVersion);
-      const header = `This snippet is from a lesson on Scala's syntactic sugar. It either uses long-form/explicit syntax that has a sweeter equivalent or tries to use the syntactic sugar but misses something. Identify the syntactic-sugar feature at play, point out what's happening (the cleaner form or what the attempt is missing), and show what idiomatic Scala would look like. The code below is written in ${lang}.`;
+      const header = `${customPrompt} The code below is written in ${lang}.`;
       if (data?.code) return `${header}\n\nSource:\n\`\`\`scala\n${data.code}\n\`\`\``;
       return `${header}\n\nSource (Scastie): ${url}\n\n(Note: the code itself is on the Scastie page; I couldn't inline it.)`;
     }
 
+    // Each snippet: [brokenId, title, { workingId, prompt }?]
+    // Snippets without config show broken-only with no AI button (pending customization).
     const snippets = [
-      ["NwBEPLyTSFWV9SKGmy1Gcg", "Hey, this is a SAM!"],
-      ["ap6C8nJ6QW2hWi3BuZSObA", "What's with the weird name for this `!` alternative?"],
-      ["tRx0B4opRFqJA8aRk1ZD2g", "Why might I want to name it `apply`?"],
-      ["vUYctx5oRCuGSD7jBg73Yw", "What is the benefit of `unapply?`"],
-      ["sdkKYBznR1Kq99BJmI3Rhw", "Oh yeah, what about the overflow case?"],
-      ["MSpgXUvKTw6B7N1vTJCY1A", "What is the syntactic sugar way to use `unapplySeq`?"],
-      ["kYNZKu91SAig9jIwkPj5LQ", "What's `unapplySeq` warning about?"],
-      ["Ma0yHrPGR4SDr9V3qrvdtQ", "But what does the syntactic sugar usage for `update` look like?"],
-      ["gnxuApiDRqmQhlXfoBpFcg", "Has science gone too far?"],
-      ["3pKNaHuZTiWVjiXPPqoNLQ", "Why are these different if they have the same implementation?"],
-      ["oOK7dE5gRgWVYVUwet3K2A", "Python doesn't hate me when I do this."],
-      ["AF8nk6LXTJWazydicO5I8w", "Infix types?"],
-      ["989JbP2wQO2IdGTJdnjgiQ", "I want the sugary divide though."],
-      ["cg6XPrr8QzqPzPU33nnNGQ", "Why doesn't it like the `b` example?"],
-      ["j7e5XEu5Q4W1aR7gumA4jA", "Why can't I use a for loop over a number?"],
-      ["hzefxm86QtKGlMHdu3Hbqw", "Needs a `foreach` method to use `for` like this."],
-      ["6w6aiqJQTW25vFAc155mAg", "Why is `👋` printing as two weird Chars?"],
-      ["pX2oDBXsS1SUAodYTrTMtw", "Why does `Char` not match the extension's `Int`?"],
-      ["JMi7cP8JSDOlbXmAxDzryQ", "Those letters look slanted."],
-      ["SjZTqe4zQJugWAZhlnerQg", "Why does my custom `withFilter` mismatch?"],
-      ["MfMCDVV7SSS0hu9WWw3PZw", "`yield`?"],
-      ["QB8GVoYBQpWBMHgAalJ8KA", "Why did this language fail?"],
-      ["kUX8hP32RRiUlJ3Q7Nbcyw", "Is `flatMap` like the outer loop here?"],
-      ["8fMOEk3ER9Oxh2IbP1YmMQ", "Why does my custom `flatMap` cause a type error?"],
-      ["q9zg7tZUTeOP4fTQfjQ4Bg", "There is something unsafe about the `hype` method."],
+      ["YukEftZBRNGZrqxLgMFSAg", "Why the extra parens?", {
+        workingId: "1qQVX3oXRWCxQPXKpibUXQ",
+        explanation: `<p>For a single-argument method call, Scala lets you replace the <code>()</code> argument list with a <code>{}</code> block directly: <code>println { ... }</code> is sugar for <code>println({ ... })</code>. The block <em>is</em> the argument.</p>`,
+        prompt: "Why can I drop the parens around a block argument?"
+      }],
+      ["NwBEPLyTSFWV9SKGmy1Gcg", "Hey, this is a SAM!", {
+        workingId: "ekUdFjGqQQG1rxN0X0HXsw",
+        explanation: `<p><code>ConsumesInts</code> is a <strong>SAM</strong> (Single Abstract Method) — a trait with exactly one abstract method (<code>consume</code>). The verbose <code>new ConsumesInts { ... }</code> form works, but Scala's SAM conversion lets you assign a function literal (<code>println(_)</code>) directly to the SAM type, and the compiler synthesizes the boilerplate.</p>`,
+        prompt: "What syntax benefit does this trait get from being a SAM?"
+      }],
+      ["ap6C8nJ6QW2hWi3BuZSObA", "What's with the weird name for this `!` alternative?", {
+        workingId: "bMlLwWHtTyWMVWn0byLBhA",
+        explanation: `<p>Scala recognizes specific method names (<code>unary_~</code>, <code>unary_!</code>, <code>unary_-</code>, <code>unary_+</code>) as prefix-operator definitions. Naming the method <code>unary_~</code> lets you call it as <code>~true</code> — that's the sugar. Calling it as <code>true.unary_~</code> or <code>unary_~(true)</code> works but loses the point.</p>`,
+        prompt: "Why is the method named \`unary_~\`?"
+      }],
+      ["tRx0B4opRFqJA8aRk1ZD2g", "Why might I want to name it `apply`?", {
+        workingId: "KJMbfxUeSaewdjEtKaKiiw",
+        explanation: `<p>Any method named <code>apply</code> can be invoked using parentheses on the receiver — calling <code>2.apply(3)</code> is the same as <code>2(3)</code>. That's the sugar: <code>apply</code> lets a value act as a function/callable.</p>`,
+        prompt: "What's the syntax benefit of naming the method \`apply\`?"
+      }],
+      ["vUYctx5oRCuGSD7jBg73Yw", "What is the benefit of `unapply?`", {
+        workingId: "m4N2bFFwQ9avXT4ARjUEng",
+        explanation: `<p><code>unapply</code> enables destructuring/pattern matching: <code>val DirectionAndMagnitude(neg, mag) = -6</code> calls <code>unapply(-6)</code> and binds the named-tuple fields to <code>neg</code> and <code>mag</code>. Without the sugar, you'd call <code>unapply</code> manually and access the fields explicitly.</p>`,
+        prompt: "What's the syntax benefit of defining \`unapply\`?"
+      }],
+      ["sdkKYBznR1Kq99BJmI3Rhw", "Oh yeah, what about the overflow case?", {
+        workingId: "EUteShFlSL2Lfsi0RB9xEA",
+        explanation: `<p><code>unapply</code> can return <code>Option[...]</code>, where <code>None</code> signals "doesn't match" — useful for special cases like <code>Int.MinValue</code>, whose <code>.abs</code> would overflow. Used in a <code>val</code> binding, a <code>None</code> result throws a <code>MatchError</code>. Use a full <code>match</code> with a fallback case so you can handle the no-match path explicitly.</p>`,
+        prompt: "What does returning \`Option\` from \`unapply\` enable, and how should I use it?"
+      }],
+      ["MSpgXUvKTw6B7N1vTJCY1A", "What is the syntactic sugar way to use `unapplySeq`?", {
+        workingId: "MlENCItvTYOkb8xacR5mCw",
+        explanation: `<p><code>unapplySeq</code> enables variadic pattern matching: <code>case Words(first, second, rest*) =&gt; ...</code> extracts the first two elements and gathers the rest. Without the sugar, you'd call <code>unapplySeq</code> directly and work with the <code>Seq</code> manually.</p>`,
+        prompt: "What's the syntactic sugar for \`unapplySeq\`?"
+      }],
+      ["Ma0yHrPGR4SDr9V3qrvdtQ", "But what does the syntactic sugar usage for `update` look like?", {
+        workingId: "ZcHoMIvXRJepzeGD2rNdKw",
+        explanation: `<p>A method named <code>update</code> enables the <code>receiver(args) = value</code> sugar. <code>box() = 1</code> desugars to <code>box.update(1)</code>. With multiple positional args (e.g. <code>arr(0) = 5</code>), they become arguments to <code>update</code>, with the assigned value tacked on the end.</p>`,
+        prompt: "What's the syntax benefit of defining \`update\`?"
+      }],
+      ["gnxuApiDRqmQhlXfoBpFcg", "Has science gone too far?", {
+        explanation: `<p>This extends the previous <code>update</code> sugar to <code>Int</code>. <code>2(3) = 6</code> desugars to <code>2.update(3, 6)</code>, which (per the extension) computes <code>2 * 3 == 6</code> → <code>true</code>. Likewise <code>1(4) = 0</code> computes <code>1 * 4 == 0</code> → <code>false</code>. Whether this is <em>useful</em> is another question.</p>`,
+        prompt: "What does \`2(3) = 6\` actually evaluate to?"
+      }],
+      ["3pKNaHuZTiWVjiXPPqoNLQ", "Why are these different if they have the same implementation?", {
+        explanation: `<p>Operators ending in <code>:</code> are <strong>right-associative</strong>; others are left-associative. <code>2 ** 2 ** 3</code> evaluates as <code>(2 ** 2) ** 3 = 4³ = 64</code>. <code>2 **: 2 **: 3</code> evaluates as <code>2 **: (2 **: 3) = 2^(2³) = 2⁸ = 256</code>. Same operation, opposite grouping.</p>`,
+        prompt: "Why do these produce different results?"
+      }],
+      ["oOK7dE5gRgWVYVUwet3K2A", "Python doesn't hate me when I do this.", {
+        workingId: "VlykEQgdTcq8m5FPKAjvdQ",
+        explanation: `<p>In Scala 3, methods with alphanumeric names (like <code>and</code>) need the <code>infix</code> modifier to be called in infix syntax (without a dot). Without it, the compiler complains. Symbolic methods (like <code>+</code>) don't need it. Python's <code>and</code> is a built-in keyword, so no ceremony required there.</p>`,
+        prompt: "Why does Python's \`and\` work but this Scala version doesn't?"
+      }],
+      ["AF8nk6LXTJWazydicO5I8w", "Infix types?", {
+        workingId: "bnNW2RmVRumnyn27WWlHjA",
+        explanation: `<p>Just like methods, parameterized type aliases need the <code>infix</code> modifier in Scala 3 to be used in infix position. Adding <code>infix</code> to <code>type And[A, B]</code> lets <code>Int And Boolean</code> work; without it, you'd write <code>And[Int, Boolean]</code>.</p>`,
+        prompt: "What's needed for \`Int And Boolean\` syntax?"
+      }],
+      ["cg6XPrr8QzqPzPU33nnNGQ", "Why doesn't it like the `b` example?", {
+        explanation: `<p><code>÷=</code> is compound assignment: <code>a ÷= 3</code> desugars to <code>a = a ÷ 3</code>. That requires the receiver to be reassignable — <code>var</code> works, <code>val</code> doesn't. So <code>a ÷= 3</code> succeeds, but <code>b ÷= 3</code> fails because <code>b</code> is a <code>val</code>.</p>`,
+        prompt: "Why does \`a ÷= 3\` work but \`b ÷= 3\` doesn't?"
+      }],
+      ["wX6LnEexRgWrP4hPSEqPBQ", "Now with `foreach`, can I use for-loop syntax?", {
+        workingId: "3veRvxjMTPqGlcrJcaYHlQ",
+        explanation: `<p>With a <code>foreach</code> extension method on <code>Int</code>, the for-loop sugar becomes available: <code>for (i &lt;- 1)</code> desugars to <code>1.foreach(i =&gt; ...)</code>. Both forms are equivalent.</p>`,
+        prompt: "What for-loop sugar does \`foreach\` enable?"
+      }],
+      ["sYpSmAhNTLmClFbwwO1aJw", "Now with `withFilter`, can I use `if`?", {
+        workingId: "OFDm0nkYSwiOJDIPBXGTrQ",
+        explanation: `<p>With both <code>foreach</code> and <code>withFilter</code> extensions, the for-loop's <code>if</code> guard works too: <code>for { i &lt;- 0; if i % 2 == 0 } { ... }</code> desugars to <code>0.withFilter(_ % 2 == 0).foreach(...)</code>. Each <code>if</code> in a for-comprehension calls <code>withFilter</code>.</p>`,
+        prompt: "What does the \`if\` guard in a for-comprehension desugar to?"
+      }],
+      ["3ZMAXXdSR9SIZFMooPCuuw", "Now with `map`, can I use `yield`?", {
+        workingId: "38njVKEiSRemgLGjuTZifQ",
+        explanation: `<p><code>yield</code> in a for-comprehension desugars to <code>map</code>. With a <code>map</code> extension on <code>Int</code>, the <code>for { i &lt;- 1 } yield { i + 1 }</code> syntax becomes available — it desugars to <code>1.map(i =&gt; i + 1)</code>.</p>`,
+        prompt: "What does \`yield\` desugar to?"
+      }],
+      ["LF863TQrRKuJzzOCr5i6mg", "Now with `flatMap`, can I chain `<-`s?", {
+        workingId: "j5Hsm8NWSzGBh94a6Oarjg",
+        explanation: `<p>A for-comprehension with multiple <code>&lt;-</code> generators desugars to nested <code>flatMap</code> calls, with the final <code>&lt;-</code> combined with <code>yield</code> becoming a <code>map</code>. So <code>for { i &lt;- 1; j &lt;- 2; k &lt;- 3 } yield i + j + k</code> is just <code>1.flatMap(i =&gt; 2.flatMap(j =&gt; 3.map(k =&gt; i + j + k)))</code>.</p>`,
+        prompt: "What does a multi-generator for-yield desugar to?"
+      }],
+      ["q9zg7tZUTeOP4fTQfjQ4Bg", "There is something unsafe about the `hype` method.", {
+        workingId: "klcdJH1OQO2SQ2ARnyh2uA",
+        explanation: `<p>An extension method on <code>StringContext</code> enables custom string-interpolator syntax: <code>hype"text \${arg} more"</code> is sugar for <code>StringContext("text ", " more").hype(arg)</code>. The "unsafe" part: this <code>hype</code> assumes the standard parts/args layout that real interpolation guarantees. If you build the <code>StringContext</code> manually with mismatched counts, indexing into <code>sc.parts(i/2)</code> or <code>args(i/2)</code> could go out of bounds.</p>`,
+        prompt: "What sugar does extending \`StringContext\` enable, and why is \`hype\` unsafe?"
+      }],
     ];
 
     const states = loadStates();
-
     const applyStatusFns = [];
 
     function clearProgress() {
@@ -153,42 +226,84 @@
       if (clearBtn) clearBtn.addEventListener("click", clearProgress);
     }
 
-    const ol = document.getElementById("snippets");
-    snippets.forEach(([id, title], index) => {
-      const url = base + id;
+    function makeIframeColumn(url, { hiddenInitially = false } = {}) {
+      const column = document.createElement("div");
+      column.className = "iframe-column";
+
+
       const iframe = document.createElement("iframe");
       iframe.dataset.src = url;
-      const handle = document.createElement("div");
-      handle.className = "drag-handle";
-      handle.addEventListener("mousedown", (e) => {
-        e.preventDefault();
-        const startY = e.clientY;
-        const startH = wrap.offsetHeight;
-        const onMove = (e) => { wrap.style.height = Math.max(100, startH + e.clientY - startY) + "px"; };
-        const onUp = () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
-      });
-      const wrap = document.createElement("div");
-      wrap.className = "iframe-wrap";
-      wrap.appendChild(iframe);
-      wrap.appendChild(handle);
-      const btn = document.createElement("button");
-      btn.className = "reset";
-      btn.textContent = "Reset";
-      btn.addEventListener("click", () => { iframe.src = url; });
+
+      const content = document.createElement("div");
+      content.className = "iframe-content";
+
+      if (hiddenInitially) {
+        const placeholder = document.createElement("button");
+        placeholder.type = "button";
+        placeholder.className = "iframe-reveal-btn";
+        placeholder.textContent = "💡 Reveal";
+        placeholder.title = "Reveal the working version";
+        placeholder.addEventListener("click", (e) => {
+          e.stopPropagation();
+          placeholder.remove();
+          content.appendChild(iframe);
+          if (!iframe.src) iframe.src = url;
+        });
+        content.appendChild(placeholder);
+      } else {
+        content.appendChild(iframe);
+      }
+
+      column.appendChild(content);
+      return { column, iframe };
+    }
+
+
+    const ol = document.getElementById("snippets");
+    snippets.forEach(([id, title, config], index) => {
+      const url = base + id;
+      const workingId = config?.workingId;
+      const workingUrl = workingId ? base + workingId : null;
+      const customPrompt = config?.prompt;
+
+      const hasWorking = !!workingUrl;
+      const hasExplanation = !!config?.explanation;
+      const broken = makeIframeColumn(url);
+      const working = hasWorking
+        ? makeIframeColumn(workingUrl, { hiddenInitially: true })
+        : null;
+
+      const pair = document.createElement("div");
+      pair.className = "iframe-pair";
+      pair.appendChild(broken.column);
+      if (working) pair.appendChild(working.column);
+
       const details = document.createElement("details");
       details.addEventListener("toggle", () => {
-        if (details.open && !iframe.src) iframe.src = url;
+        if (details.open && !broken.iframe.src) broken.iframe.src = url;
       });
+
       const summary = document.createElement("summary");
       const titleSpan = document.createElement("span");
       titleSpan.className = "summary-title";
       titleSpan.textContent = title;
       summary.appendChild(titleSpan);
 
-      const actions = document.createElement("span");
-      actions.className = "summary-actions";
+      const copyLink = document.createElement("button");
+      copyLink.type = "button";
+      copyLink.className = "copy-link-icon";
+      copyLink.textContent = "🔗";
+      copyLink.title = "Copy link to this snippet";
+      copyLink.addEventListener("click", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const linkUrl = window.location.href.split("#")[0] + `#snippet-${index + 1}`;
+        navigator.clipboard.writeText(linkUrl).then(() => {
+          copyLink.textContent = "✓";
+          setTimeout(() => { copyLink.textContent = "🔗"; }, 1500);
+        });
+      });
+      summary.appendChild(copyLink);
 
       const li = document.createElement("li");
       li.id = `snippet-${index + 1}`;
@@ -224,60 +339,64 @@
       }
 
       understoodBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("understood"); if (states[id] === "understood") details.open = false; });
-      revisitBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("revisit"); });
+      revisitBtn.addEventListener("click", (e) => { e.stopPropagation(); setState("revisit"); if (states[id] === "revisit") details.open = false; });
 
-      const askAi = document.createElement("button");
-      askAi.type = "button";
-      askAi.className = "pill ask-ai";
-      askAi.textContent = "Ask ChatGPT";
-      askAi.title = "Open AI chat with this snippet prefilled";
-      askAi.addEventListener("click", async (e) => {
-        e.stopPropagation();
-        askAi.textContent = "…";
-        const data = await fetchSnippetData(id);
-        const prompt = buildPrompt(url, data);
-        const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
-        window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
-        askAi.textContent = "Ask ChatGPT";
-      });
-      actions.appendChild(askAi);
-      actions.appendChild(understoodBtn);
-      actions.appendChild(revisitBtn);
-
-      summary.appendChild(actions);
       details.appendChild(summary);
-      details.appendChild(wrap);
+      details.appendChild(pair);
 
       const tools = document.createElement("div");
       tools.className = "snippet-tools";
-      tools.appendChild(btn);
 
-      const popout = document.createElement("a");
-      popout.href = url;
-      popout.target = "_blank";
-      popout.textContent = "Open in new tab ↗";
-      popout.className = "pill popout";
-      popout.title = "Open Scastie in new tab";
-      popout.addEventListener("click", (e) => e.stopPropagation());
-      tools.appendChild(popout);
-
-      const copyLink = document.createElement("button");
-      copyLink.type = "button";
-      copyLink.className = "pill copy-link-btn";
-      copyLink.textContent = "🔗 Copy link";
-      copyLink.title = "Copy link to this snippet";
-      copyLink.addEventListener("click", (e) => {
-        e.stopPropagation();
-        const url = window.location.href.split("#")[0] + `#snippet-${index + 1}`;
-        navigator.clipboard.writeText(url).then(() => {
-          const original = copyLink.textContent;
-          copyLink.textContent = "✓ Copied!";
-          setTimeout(() => { copyLink.textContent = original; }, 1500);
+      if (customPrompt) {
+        const askAi = document.createElement("button");
+        askAi.type = "button";
+        askAi.className = "pill ask-ai";
+        askAi.textContent = "Ask ChatGPT";
+        askAi.title = "Open AI chat with the original snippet prefilled";
+        askAi.addEventListener("click", async (e) => {
+          e.stopPropagation();
+          askAi.textContent = "…";
+          const data = await fetchSnippetData(id);
+          const prompt = buildPrompt(url, data, customPrompt);
+          const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
+          window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
+          askAi.textContent = "Ask ChatGPT";
         });
+        tools.appendChild(askAi);
+      }
+
+      let explanationEl = null;
+      if (hasExplanation) {
+        explanationEl = document.createElement("details");
+        explanationEl.className = "explanation-details";
+        const explanationSummary = document.createElement("summary");
+        explanationSummary.className = "explanation-summary";
+        explanationSummary.textContent = "💡 Explanation";
+        const explanationBody = document.createElement("div");
+        explanationBody.className = "explanation-panel";
+        explanationBody.innerHTML = config.explanation;
+        explanationEl.appendChild(explanationSummary);
+        explanationEl.appendChild(explanationBody);
+      }
+
+      const resetBtn = document.createElement("button");
+      resetBtn.className = "reset";
+      resetBtn.textContent = "↻ Reload original code";
+      resetBtn.addEventListener("click", () => {
+        broken.iframe.src = url;
+        if (working && working.iframe && working.iframe.src) working.iframe.src = workingUrl;
       });
-      tools.appendChild(copyLink);
+      tools.appendChild(resetBtn);
 
       details.appendChild(tools);
+      if (explanationEl) details.appendChild(explanationEl);
+
+      const marksRow = document.createElement("div");
+      marksRow.className = "marks-row";
+      marksRow.appendChild(understoodBtn);
+      marksRow.appendChild(revisitBtn);
+      details.appendChild(marksRow);
+
       li.appendChild(details);
       ol.appendChild(li);
     });
