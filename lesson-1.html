@@ -138,10 +138,33 @@
         explanation: `<p>Scala's <code>match</code> doesn't fall through to subsequent cases the way a C-style <code>switch</code> does. Once a case matches, that branch runs and the match ends — later cases aren't executed.</p>`,
         prompt: "Why doesn't `case 1` execute?"
       }],
+      ["xawyrgP3TtmCIdvduv1SwQ", "Verbose. Is there a shorter way?", {
+        workingId: "juz9W22PSNGgsi3jJaqTNQ",
+        explanation: `<p>Patterns can be combined with <code>|</code>: <code>case 0 | 1 | 2 =&gt; ...</code> matches any of those values and shares one body. Shorter and clearer than repeating the body.</p>`,
+        prompt: "How can I share one body across multiple patterns?"
+      }],
+      ["bhiG95qNQpiQCCaMA0PoeQ", "Do I really have to spell out every value?", {
+        workingId: "CiZOzOmkR9CWs13Y2kO6sA",
+        explanation: `<p><code>case _</code> is the wildcard — it matches anything and binds nothing. Use it as a catch-all rather than enumerating every remaining possibility.</p>`,
+        prompt: "What's \`case _\`, and when should I use it instead of listing each value?"
+      }],
       ["jWgLif97TSeaUJ2D3gWLGQ", "I suspected `match`-`case` might be an expression too.", {
         workingId: "0oAkvMqYQOmDXxHEVMkDcA",
         explanation: `<p>Scala 3's brace-less <code>match</code> requires the cases to begin on a new line, indented under <code>match</code>. The inline form needs explicit braces. And yes — <code>match</code> is an expression that evaluates to the matched case body.</p>`,
         prompt: "Why doesn't this compile?"
+      }],
+      ["aQXVWdD0Q2KHjOpBdPVmOw", "Why doesn't this match?", {
+        workingId: "HTDFzzskRXu9cjtGdwTsOg",
+        explanation: `<p><code>match</code> patterns are type-checked. The scrutinee is an <code>Int</code>; <code>case "0"</code> is a <code>String</code> pattern that could never apply to an <code>Int</code>, so the compiler rejects it.</p>`,
+        prompt: "Why doesn't \`case \"0\"\` match the value \`0\`?"
+      }],
+      ["KKU7zlSVRU6vZNEN09J0nA", "Two cases match — which wins?", {
+        explanation: `<p>Cases are tried in order, top to bottom. The first one that matches runs and the rest are skipped — here that's <code>case 0 =&gt; "hi"</code>. The second <code>case 0</code> is unreachable; the compiler typically warns about that.</p>`,
+        prompt: "When two \`case\` clauses would both match, which one runs?"
+      }],
+      ["hiaXYhX9TlGDNFObm0jzPg", "Why does this evaluate to `2`?", {
+        explanation: `<p>A <code>case</code> can carry an <code>if</code> <strong>guard</strong> that further restricts when it matches. The first case here only matches when its guard is true — and the literal <code>false</code> means it never does. So the matcher moves on and the second case (no guard) takes it.</p>`,
+        prompt: "What does the \`if\` after a pattern do?"
       }],
       ["JOzvbvVhRmmJMRY8zn709w", "TypeScript will let you `throw \"shade\"`, but not Scala.", {
         workingId: "wwqQytZRS7KFoHZKZQKgnQ",
@@ -178,6 +201,11 @@
       ["SXllrUGkRwGg4kbbE6NCPQ", "I was told there would be no semicolons.", {
         explanation: `<p>Semicolons aren't required at the end of a line in Scala — that's the rule most learners hear. But when you put multiple statements on a single line, you need a semicolon to separate them. Here <code>{ println(1); 2 }</code> is the same block as the previous snippet, just compressed onto one line.</p>`,
         prompt: "I thought Scala didn't use semicolons. What's going on?"
+      }],
+      ["3YZADvR8QBup6M7aXadQEw", "Why does `executes?` print twice?", {
+        workingId: "6q0LFsKQTXe88vRVRjLFNw",
+        explanation: `<p>The single-character operators <code>|</code> and <code>&amp;</code> are eager — both sides are always evaluated. The double-character <code>||</code> and <code>&amp;&amp;</code> short-circuit: <code>true ||</code> skips the right side, and <code>false &amp;&amp;</code> skips the right side. The right-side block here only prints when the operator doesn't short-circuit.</p>`,
+        prompt: "Why is the right-hand side getting evaluated here? I expected it to be skipped."
       }],
       ["neuEFrWETrOuZrXiM7nRZg", "Run me a few times — looks like a labeled break or early return.", {
         explanation: `<p><code>scala.util.boundary</code> plus <code>boundary.break(...)</code> is Scala 3's structured non-local return: <code>break</code> jumps out of the enclosing <code>boundary</code> block, and the value passed to <code>break</code> becomes the block's result. If <code>break</code> isn't called, the block evaluates to its last expression as usual. Run this a few times — depending on the random <code>Boolean</code>, you'll see either <code>unlucky</code> (from <code>break</code>) or <code>lucky</code> + <code>congrats</code>.</p>`,
