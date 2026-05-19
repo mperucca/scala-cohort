@@ -115,6 +115,14 @@
         explanation: `<p><code>var</code> lets you reassign — but only to a value of the same (inferred) type. Here <code>a</code> was inferred as <code>Int</code> from <code>1</code>, so assigning a <code>String</code> is a type error. Mutability isn't the same as type-flexibility.</p>`,
         prompt: "Why doesn't this compile?"
       }],
+      ["J16MRZyZQnOtWdLEr7xzBw", "Fine — I'll just declare it again.", {
+        explanation: `<p>You can't redeclare a name in the same scope. The compiler treats <code>val a</code> as defining a binding, not assigning to one — and there can only be one <code>a</code> per scope. (A nested block can shadow it, but at the same level, no.)</p>`,
+        prompt: "Why doesn't this compile? I thought I was making a new \`a\`."
+      }],
+      ["RHwcgbY4SZCgqQkfFYdqwg", "Wait — this one compiles, and prints `2`?", {
+        explanation: `<p>Each block (<code>{ ... }</code>) is its own scope. A <code>val</code> declared inside a nested block <strong>shadows</strong> any outer binding of the same name within that block — the outer <code>a</code> is hidden, not changed. Once the block ends, the outer <code>a</code> is visible again. There's no built-in syntax to reach past the shadow from inside the block; if you need both, give one of them a different name.</p>`,
+        prompt: "Why does this compile and print \`2\`? And from inside the inner block, is there a way to reference the outer \`a\`?"
+      }],
       ["Zq20uGUvQ6GNtrXFUnYi6Q", "Did I just prove `a != a`?", {
         workingId: "smpBGzaTTeSTlR7IvMio0A",
         explanation: `<p><code>def</code> creates a parameterless method that re-evaluates every time it's referenced. So <code>a == a</code> compares two different <code>nanoTime()</code> readings, and the assertion fails. Use <code>val</code> to evaluate once and reuse.</p>`,
@@ -179,6 +187,16 @@
         workingId: "pZFBWI7mRyq3CJlSedEVxA",
         explanation: `<p>Scala tuples use parentheses: <code>(1, false, "move")</code>. Python's bare-comma form (<code>1, false, "move"</code>) and TypeScript/JavaScript's square brackets (<code>[1, true, "love"]</code> — which is an array there) don't work in Scala.</p>`,
         prompt: "How do I write a tuple in Scala?"
+      }],
+      ["NdP2aZTBQwm4pRmzUuqSLQ", "Why doesn't this destructure?", {
+        workingId: "W279TXruQdukmkIol0cB4w",
+        explanation: `<p>A <code>val</code> binding with a pattern on the left is actually a pattern match. <code>val (a, b) = ...</code> matches against a 2-tuple — but the right-hand side here is a 3-tuple, so the pattern doesn't match and the compiler rejects it. The arity has to line up.</p>`,
+        prompt: "Why doesn't this \`val (a, b) = ...\` work?"
+      }],
+      ["r8VLmBh6SsCdNDCbz30jAA", "Can I get the whole tuple and its parts in one go?", {
+        workingId: "VZPsu3WIQy27vw8BOE1tsg",
+        explanation: `<p>Two separate <code>val</code>s work, but Scala has a built-in shorthand: <code>val a @ (b, c) = ...</code>. The <code>@</code> binding pattern binds the whole matched value to <code>a</code> while also destructuring it into <code>b</code> and <code>c</code> — one binding, both shapes.</p>`,
+        prompt: "Is there a way to bind both the whole tuple and its parts in one \`val\`?"
       }],
       ["JtvzClqFRRWg3lpQ7jE96A", "Does the field order matter for named tuples?", {
         workingId: "5KOFThLrQcaELyJtSb2ndQ",
