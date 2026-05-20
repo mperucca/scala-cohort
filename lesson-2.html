@@ -178,6 +178,15 @@
         explanation: `<p>In <code>s</code>-interpolation, <code>$a</code> injects just the identifier <code>a</code>. Anything after — including <code>+1</code> — is treated as literal text. To inject an expression, wrap it in braces: <code>\${a+1}</code>. So <code>s"$a + 1 = $a+1"</code> becomes <code>1 + 1 = 1+1</code>, not <code>1 + 1 = 2</code>.</p>`,
         prompt: "Why isn't `$a+1` becoming `2`?"
       }],
+      ["pwvVhTGbT6eADYt9rTWuXA", "Why is my sentence breaking across lines?", {
+        workingId: "ZMm0A2ftQnCblA6E9IJT6w",
+        explanation: `<p>In a regular string literal, <code>\\n</code> is the escape sequence for a newline — so writing "<code>\\n</code>" produces an actual line break. To keep the backslash-n literal (e.g. when describing the escape, or writing regex patterns or Windows paths), use a <code>raw"..."</code> string: <code>raw</code> skips escape processing, so every character is treated verbatim.</p>`,
+        prompt: "Why is the output breaking into two lines? I wanted the literal characters \`\\n\` to show up."
+      }],
+      ["E90QtfqNQhenJaTSNcHQaA", "What does this print?", {
+        explanation: `<p>Triple-quote strings demonstrate two features at once, both visible in the snippet itself: a literal newline in the source becomes a newline in the output (multi-line without escaping), and escape sequences like <code>\\n</code> are not processed (they stay as the two characters <code>\\</code> and <code>n</code>). The string's own content is your cheat sheet. As a bonus, you don't have to escape <code>"</code> inside a triple-quote either.</p>`,
+        prompt: "What does this print, and what features of \`\"\"\"...\"\"\"\` does it demonstrate?"
+      }],
       ["2H17o1KSQ3eYsEfrwXLyzQ", "But I really want to use `lazy` as a variable name.", {
         workingId: "m0EMpM1qQjyKTflS0BAD6A",
         explanation: `<p><code>lazy</code> is a reserved Scala keyword (it's used in <code>lazy val</code>), so it can't be a normal identifier. If you really want it, wrap it in backticks: <code>\`lazy\`</code> — Scala treats anything in backticks as a literal identifier, ignoring its keyword status.</p>`,
