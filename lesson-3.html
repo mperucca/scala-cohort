@@ -116,8 +116,8 @@
         explanation: `<p>The function type for "no args, returns Int" is <code>() =&gt; Int</code>.</p>`,
         prompt: "What should the type annotation be here?"
       }],
-      ["SvqpvEtBQ9Kslkmchnxsag", "The function expects nothing, so I gave it nothing.", {
-        workingId: "EcKpuW3LQSSF5ytDJw9FRA",
+      ["plfphqouQAe1RrywYBwxsg", "The function expects nothing, so I gave it nothing.", {
+        workingId: "Vl21jYbsTIKBvbQ98gU1HA",
         explanation: `<p><code>a</code> is a function value; <code>println(a)</code> prints the function object itself (something like <code>&lt;function0&gt;</code>), not its result. To call a function with no arguments, you still need the empty parens: <code>a()</code>. That's how Scala distinguishes "the function" from "the result of calling it."</p>`,
         prompt: "Why does this print the function instead of `1`?"
       }],
@@ -125,10 +125,6 @@
         workingId: "yk6fViPdTDa4zR4mLpNJFQ",
         explanation: `<p><code>(_: Int) + 1</code> is shorthand for <code>(x: Int) =&gt; x + 1</code> — a function that takes an <code>Int</code>. The underscore is a placeholder for the argument, not a sign that there's no argument. Calling <code>a()</code> provides nothing, but <code>a</code> expects one <code>Int</code> — so it has to be <code>a(&lt;some Int&gt;)</code>.</p>`,
         prompt: "What argument does this function actually expect?"
-      }],
-      ["Jd6XUSa2TAKygO0P5nc9mw", "I just want to name my argument.", {
-        explanation: `<p>To name a function's parameter, you also need the arrow: <code>(i: Int) =&gt; i + 1</code>. Without <code>=&gt;</code>, <code>(i: Int)</code> is just an attempted type-ascribed expression — and <code>i</code> isn't in scope, so it fails. The previous snippet's <code>(_: Int) + 1</code> worked only because <code>_</code> is shorthand for the whole function literal.</p>`,
-        prompt: "Why does the underscore version work but this one doesn't?"
       }],
       ["sjIrBDSuS8aNvxIdhUyjuA", "Okay, I just need to grok this one.", {
         explanation: `<p>When the function's type is known from context (here, the annotation <code>Int =&gt; Int</code>), <code>_ + 1</code> is shorthand for <code>(x: Int) =&gt; x + 1</code> — the underscore is the parameter. This is the most concise way to write a single-arg lambda when the type is inferable.</p>`,
@@ -144,13 +140,8 @@
         explanation: `<p>Each <code>_</code> in <code>(_: Int) + (_: Int)</code> is a separate placeholder for a <em>different</em> parameter. So this expands to <code>(a: Int, b: Int) =&gt; a + b</code> — a two-argument adder, not a doubling function. Calling it with one argument doesn't suffice.</p>`,
         prompt: "Why isn't this compiling?"
       }],
-      ["nYEnOc09SXK9vi75fKQcxw", "Do I just have a silly mistake? (Yes.)", {
-        workingId: "V8aFxFuvR5u20OqCfTv3Mg",
-        explanation: `<p><code>a</code> expects two <code>Int</code> arguments (<code>i</code> and <code>j</code>), but it's being called with only one. Provide both.</p>`,
-        prompt: "What's the silly mistake?"
-      }],
-      ["WqhTil8YQGKPjPGVFrmSTQ", "Hm, underscore doin' somethin' here. What would `c` be?", {
-        workingId: "vaJs5xBbScqDZgvwGi0Osg",
+      ["V9g8YkJpQHWkwx3YSmcVVQ", "Hm, underscore doin' somethin' here. What would `c` be?", {
+        workingId: "PZT4sr2ATmGXLB566WyIeQ",
         explanation: `<p><code>a</code> is <code>(x, y) =&gt; x - y</code>. <code>a(2, _)</code> is partial application — supply the first arg, leave the second open — so <code>b</code> is <code>y =&gt; 2 - y</code>. Then <code>b(1) = 2 - 1 = 1</code>. So <code>c == 1</code>.</p>`,
         prompt: "What is `c`?"
       }],
@@ -164,11 +155,6 @@
         explanation: `<p><code>(i: Int) =&gt; (j: Int) =&gt; i + j</code> is a <strong>curried</strong> function: it takes one <code>Int</code> and returns a function that takes another. So it's <code>Int =&gt; (Int =&gt; Int)</code>, not <code>(Int, Int) =&gt; Int</code>. Call it one arg at a time: <code>a(1)(1)</code>.</p>`,
         prompt: "Why doesn't `a(1, 1)` work?"
       }],
-      ["SHscgBk3QyyNHkLfQd7PUw", "Three definitions, one isn't like the others.", {
-        workingId: "kJ8rFgAdTOGHsb3v2lP6EQ",
-        explanation: `<p><code>a</code> and <code>b</code> are both <strong>curried</strong> — they take one arg and return a function expecting another. But <code>c = (_: Int) + (_: Int)</code> is <em>not</em> curried: both underscores belong to the same function, making it <code>(Int, Int) =&gt; Int</code>. So <code>c(1)(1)</code> fails — it has to be <code>c(1, 1)</code>.</p>`,
-        prompt: "Which one isn't like the others, and why?"
-      }],
       ["1FzUBeh9SoidzrGPr1peCQ", "Applying the functions one step at a time.", {
         workingId: "U2wyxlUiQwmQl40d8tqtcA",
         explanation: `<p><code>a</code> is curried: <code>Int =&gt; (Int =&gt; Int)</code> (the arrow is right-associative). <code>a(2)</code> applies the first arg, giving <code>b = j =&gt; 2 - j</code>. Then <code>b(1) = 2 - 1 = 1</code>. So <code>c == 1</code>.</p>`,
@@ -179,8 +165,8 @@
         explanation: `<p><code>a(_)(2)</code> is shorthand for <code>x =&gt; a(x)(2)</code>. Substituting <code>a</code>'s body: <code>x =&gt; x - 2</code>. So <code>b(1) = 1 - 2 = -1</code>. So <code>c == -1</code>.</p>`,
         prompt: "What is `c`?"
       }],
-      ["FeiBHcqtSBCcV66yTmdPNg", "These `[A]` brackets aren't arrays. What are they?", {
-        workingId: "t654eb5VQjuBQnRc7m6r6A",
+      ["UIGiouBWRBOiNar9VUHvfA", "These `[A]` brackets aren't arrays. What are they?", {
+        workingId: "F5THxuXIQOCv7dBbyMk8gw",
         explanation: `<p><code>[A]</code> declares a <strong>type parameter</strong>. <code>duplicate</code> is a polymorphic function: for any type <code>A</code>, given an <code>A</code>, it returns an <code>(A, A)</code> tuple. So <code>duplicate(true) == (true, true)</code>.</p>`,
         prompt: "What does `[A]` mean here, and what's the value?"
       }],
@@ -199,19 +185,29 @@
         explanation: `<p><code>?=&gt;</code> makes this a <strong>context function</strong> — its parameter is implicit. You can't pass it as a normal argument; use the explicit form <code>greet(using "hi")</code> (or set up a <code>given</code> in scope, which you'll see later).</p>`,
         prompt: "What does `?=>` mean, and how do I call this?"
       }],
-      ["xpox2akNR7Kz32BMOGcYdA", "Is a normal function type annotation incorrect?", {
-        workingId: "fCErjaOXSSeE47rgbg0NyA",
-        explanation: `<p>The annotation declares a regular function (<code>String =&gt; Unit</code>), but the body <code>greeting ?=&gt; println(greeting)</code> is a context function (<code>String ?=&gt; Unit</code>). Different types. Either annotate as <code>String ?=&gt; Unit</code> (and call with <code>using</code> or <code>given</code>), or write a regular literal <code>(greeting: String) =&gt; println(greeting)</code>.</p>`,
-        prompt: "Why doesn't this compile?"
-      }],
       ["Dpd3ZXv6TKCYcEUglokbMA", "Just trying to speculate what's going on here.", {
         explanation: `<p><code>given String = "hi"</code> puts a value into implicit scope. When you reference a context function like <code>greet</code> (which expects a <code>String</code> implicitly), the compiler finds the <code>given</code> and supplies it automatically. So <code>greet</code> ends up invoking the body with <code>greeting = "hi"</code>.</p>`,
         prompt: "Why does just writing `greet` work without arguments?"
       }],
-      ["GBAK6cgXTOK7pbTNzUf2cw", "Why can't I have multiple?", {
-        workingId: "OS2B6qNVRxOYcknD2v95Vg",
-        explanation: `<p>Two <code>given</code> values of the same type (<code>String</code>) in the same scope create ambiguity — the compiler doesn't know which one to summon. Each <code>given</code> slot is keyed by type, so you can't have two competing for the same type.</p>`,
-        prompt: "Why doesn't this compile?"
+      ["zRO85tXSQDeg9wfdZadIzA", "Why does one of these need a lambda and the other doesn't?", {
+        workingId: "0VKzrvozTWK5lNSmKkqdSA",
+        explanation: `<p>A regular <code>=&gt;</code> annotation needs an explicit lambda for its body — <code>println("hi")</code> by itself is a <code>Unit</code> value, not a <code>String =&gt; Unit</code>, so the compiler rejects it. Context functions are different: any expression on the right-hand side is <strong>auto-wrapped</strong> as the body, so <code>String ?=&gt; Unit = println("hi")</code> works as if you'd written <code>(_: String) ?=&gt; println("hi")</code>. That auto-wrap is what makes context-function APIs feel so transparent.</p>`,
+        prompt: "Why does \`greet2\` accept \`println(\"hi\")\` directly but \`greet1\` doesn't?"
+      }],
+      ["SMojyL6qREmQjGgmNACiEw", "How do I get the value from inside the context function?", {
+        workingId: "XiFsB9zeTgydS3rrdtU4oQ",
+        explanation: `<p>Inside a context function body, the implicit value has no parameter name to reach by. To fetch it, call <code>summon[T]</code> — the universal way to ask the compiler for any in-scope <code>given</code> of type <code>T</code>. So <code>summon[String]</code> produces the implicit <code>String</code>, and <code>println(summon[String])</code> prints it. The original <code>println(_)</code> is a regular <code>String =&gt; Unit</code> lambda, not a context-function body, so it doesn't fit the annotation.</p>`,
+        prompt: "Why doesn't \`println(_)\` work for \`greet2\`, and what is \`summon\`?"
+      }],
+      ["qTOvZBOmR8iZCsJusNUBwg", "Why can't I have multiple?", {
+        workingId: "LbVaCzS2ROufEKXTzMVUZg",
+        explanation: `<p>Anonymous <code>given</code>s get compiler-synthesized names based on their type — so two anonymous <code>given String</code> in the same scope collide at declaration. Giving each a name (<code>given goodMorning: String = ...</code>) avoids that collision; both now compile.</p>`,
+        prompt: "Why doesn't this compile, and how do I fix it?"
+      }],
+      ["tGjCeNcvRVKQSFAkVj5IPA", "Now they're named — why is the call still broken?", {
+        workingId: "PSd9EmMoQKKoTttcH4e1jA",
+        explanation: `<p>Naming the <code>given</code>s lets them coexist, but they still both qualify as implicit candidates for <code>String</code>. When <code>greet</code> tries to summon the implicit argument, the compiler can't choose between <code>goodMorning</code> and <code>goodAfternoon</code> and gives up. The escape hatch: pass it explicitly with <code>using</code> — <code>greet(using goodMorning)</code>.</p>`,
+        prompt: "Why is the call to \`greet\` ambiguous even after naming the givens, and how do I disambiguate?"
       }],
     ];
 
