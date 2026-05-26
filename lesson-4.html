@@ -126,6 +126,11 @@
         explanation: `<p><code>a</code> declares two parameters but is called with three — the extra argument doesn't match anything in its signature.</p>`,
         prompt: "Why doesn't this compile?"
       }],
+      ["QjIX6nDARdSyLlYDfNz0NQ", "Why does `calm()` return `panic`?", {
+        workingId: "1eaTcKzdQ6uF8pM6IdLVIA",
+        explanation: `<p><code>return</code> inside a lambda doesn't return from the lambda — it returns from the enclosing <code>def</code> (here, <code>calm</code>). So when <code>panic()</code> is invoked, the <code>return "panic"</code> short-circuits <code>calm</code> itself, never reaching the <code>"don't " + ...</code> concatenation. To return a value from a lambda, just use it as the last expression — no <code>return</code> keyword needed. This non-local return behavior is a known footgun and is discouraged in modern Scala.</p>`,
+        prompt: "Why does \`calm()\` return just \`\"panic\"\` instead of \`\"don't panic\"\`?"
+      }],
       ["x6szXzrIQcO2qCGJNfdrfg", "Needs curry(ing)", {
         workingId: "LkZi4ogiQGq2TsZ1GmcYmA",
         explanation: `<p><code>def a(i: Int)(j: Int)</code> declares <strong>two parameter lists</strong> — currying at the method level. Each list is applied separately: <code>a(1)(1)</code>, not <code>a(1, 1)</code>.</p>`,
