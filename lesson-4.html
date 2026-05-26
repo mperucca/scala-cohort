@@ -116,20 +116,28 @@
         explanation: `<p>In Scala, the return type goes <strong>after</strong> the parameter list, separated by a colon: <code>def a(i: Int): Int = i + 1</code>. The C/Java-style <code>Int a(...)</code> (return type before the name) doesn't parse.</p>`,
         prompt: "Where does the return type go?"
       }],
+      ["MVGPV4EPQc6I09YG1ratbA", "Why does `Unit` accept an `Int` body?", {
+        explanation: `<p>When a method declares its return type as <code>Unit</code>, the compiler accepts any expression in the body — it computes the value, silently discards it, and returns <code>()</code> instead. This is called <strong>value discarding</strong>. You'll often get a warning (the <code>1</code> is being computed and thrown away), but it's not an error. To actually return <code>1</code>, declare <code>: Int</code> or leave the return type inferred.</p>`,
+        prompt: "Why does the body \`1\` compile under a \`Unit\` return type? What does the method actually return?"
+      }],
       ["JUTkJzauTaGx0l1w1KiLJQ", "`a()` — did I forget something?", {
         workingId: "GL7MydjVTAm2tIeDVyi1mw",
         explanation: `<p><code>a</code> is declared with a required <code>Int</code> parameter, but <code>a()</code> calls it with none — that's the missing argument.</p>`,
         prompt: "What did I forget?"
+      }],
+      ["6aNzgmyoQhCREagE7RMllA", "I didn't pass any arguments — why does this compile?", {
+        explanation: `<p>This isn't a call to <code>f</code>, and it isn't forgetting the arguments — <code>val g = f</code> (no parens at all) stores <code>f</code> itself as a function value. Scala 3 auto-converts the method into a <code>Int =&gt; Int</code> via <strong>eta-expansion</strong>. The earlier <code>a()</code> snippet failed because empty parens meant "call with zero args"; here there are no parens, so no call is attempted. <code>g</code> is now a function you can invoke with <code>g(5)</code>.</p>`,
+        prompt: "Why does \`val g = f\` compile? Isn't \`f\` supposed to need an argument?"
       }],
       ["TbyTYSESTkiHJRwtr3Jpgg", "Too many arguments", {
         workingId: "1ZqwKJE3Sg6YR9p8AfoC9g",
         explanation: `<p><code>a</code> declares two parameters but is called with three — the extra argument doesn't match anything in its signature.</p>`,
         prompt: "Why doesn't this compile?"
       }],
-      ["QjIX6nDARdSyLlYDfNz0NQ", "Why does `calm()` return `panic`?", {
-        workingId: "1eaTcKzdQ6uF8pM6IdLVIA",
-        explanation: `<p><code>return</code> inside a lambda doesn't return from the lambda — it returns from the enclosing <code>def</code> (here, <code>calm</code>). So when <code>panic()</code> is invoked, the <code>return "panic"</code> short-circuits <code>calm</code> itself, never reaching the <code>"don't " + ...</code> concatenation. To return a value from a lambda, just use it as the last expression — no <code>return</code> keyword needed. This non-local return behavior is a known footgun and is discouraged in modern Scala.</p>`,
-        prompt: "Why does \`calm()\` return just \`\"panic\"\` instead of \`\"don't panic\"\`?"
+      ["ppwXVKzhRvuAmbrw1yng0A", "Why does `f()` return `1` instead of `0`?", {
+        workingId: "aJgr4Vi3TDSIortuT8HkyA",
+        explanation: `<p><code>return</code> inside a lambda doesn't return from the lambda — it returns from the enclosing <code>def</code>. When <code>g()</code> is invoked, <code>return 1</code> short-circuits <code>f</code> itself, so <code>f</code> returns <code>1</code> without ever computing <code>1 - g()</code>. To return a value from a lambda, just use it as the last expression — no <code>return</code> keyword needed. This non-local return behavior is a known footgun and is discouraged in modern Scala.</p>`,
+        prompt: "Why does \`f()\` return \`1\` instead of \`0\`?"
       }],
       ["x6szXzrIQcO2qCGJNfdrfg", "Needs curry(ing)", {
         workingId: "LkZi4ogiQGq2TsZ1GmcYmA",
@@ -183,6 +191,10 @@
         workingId: "HfxBy5N9Rfan0Dq0U3eNpA",
         explanation: `<p>Once you start naming arguments, you have to name them all. Mixing a named arg (<code>j = 2</code>) with a positional one (<code>1</code>) in the same call doesn't work — Scala can't reliably assign the positional one once others are out of order. Name them all: <code>a(j = 2, i = 1)</code>.</p>`,
         prompt: "Why doesn't this compile?"
+      }],
+      ["ghbQrSq2QpW6pTk6mevPMA", "Aren't parameter lists their own scope?", {
+        explanation: `<p>Multiple parameter lists separate <em>argument</em> groups for currying and implicit handling, but they don't create separate <em>name</em> scopes — the method has a single parameter namespace. So <code>def f(i: Int)(i: Int)</code> fails at the declaration: the body would have two <code>i</code>s with no way to tell them apart, and the named-argument syntax you just saw (<code>f(i = 1)</code>) would have nothing to pin down either. Use distinct names like <code>i</code> and <code>j</code>.</p>`,
+        prompt: "Why can't I name both parameters \`i\` if they're in different lists?"
       }],
       ["HCdkl2ReSzmeXcn6Rn6yLg", "But that's too much printing...", {
         explanation: `<p><code>i: =&gt; Int</code> is a <strong>by-name parameter</strong> — the argument expression isn't evaluated at the call site. Instead, it's re-evaluated each time <code>i</code> is referenced. Since the body references <code>i</code> twice, the side effects in the argument run twice: <code>Here's a one.</code> prints twice.</p>`,
