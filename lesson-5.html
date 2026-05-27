@@ -106,6 +106,22 @@
     // Each snippet: [brokenId, title, { workingId, prompt }?]
     // Snippets without config show broken-only with no AI button (pending customization).
     const snippets = [
+      ["s8ph1GBVQjqeQH6XdjbXvA", "What type can hold both `0` and `\"\"`?", {
+        explanation: `<p><code>Any</code> is the top of Scala's type hierarchy — every type is a subtype of <code>Any</code>, so any value can be assigned to a variable typed <code>Any</code>. That's why <code>0</code> (an <code>Int</code>) and <code>""</code> (a <code>String</code>) — types with no relationship to each other — both fit. The trade-off: a value typed <code>Any</code> loses its specific operations; you can only call methods defined on <code>Any</code> itself (<code>toString</code>, <code>equals</code>, <code>hashCode</code>).</p>`,
+        prompt: "What is \`Any\`, and why does it accept both \`0\` and \`\"\"\`?"
+      }],
+      ["YYoWF6U6TF29kNQGENPcyw", "I have an `Any`. Why can't I return it as an `Int`?", {
+        explanation: `<p>The subtype relationship only goes one direction: every type widens up to <code>Any</code>, but <code>Any</code> doesn't narrow back down to a specific type. <code>m</code> declares it returns <code>Int</code>, but <code>a</code> is typed <code>Any</code> — the compiler can't guarantee the value is actually an <code>Int</code>. That's exactly the cost of using <code>Any</code>: you give up specificity in exchange for universality, and recovering it requires a type test or cast.</p>`,
+        prompt: "Why doesn't \`a\` (typed \`Any\`) work as the \`Int\` return value?"
+      }],
+      ["Qb0lEOuoQlqfys3uXXehnQ", "What does `Nothing` mean as a return type?", {
+        explanation: `<p><code>Nothing</code> is the bottom of Scala's type hierarchy — it's a subtype of every type, but it has <em>no values</em>. Any expression typed <code>Nothing</code> can never actually produce one; it must either throw, loop forever, or otherwise not return. <code>loop</code> recurses indefinitely; <code>a</code>'s initializer throws. Because <code>Nothing</code> is a subtype of everything, expressions of type <code>Nothing</code> fit anywhere — that's how <code>???</code>, <code>throw</code>, and other error-throwing helpers slot into any context that expects a value.</p>`,
+        prompt: "What is \`Nothing\`, and how can something be typed as a type that has no values?"
+      }],
+      ["yq7mhDsEQ3u11gPu9hdskQ", "One of these compiles. Which, and why?", {
+        explanation: `<p><code>val n: Nothing = 1</code> fails: <code>Nothing</code> has no values, so the literal <code>1</code> (an <code>Int</code>) can't inhabit it. But <code>val i: Int = throw Error()</code> succeeds: <code>throw Error()</code> is itself an expression of type <code>Nothing</code>, and since <code>Nothing</code> is a subtype of every type, a <code>Nothing</code>-typed expression slots in wherever any type is expected — including <code>Int</code>. The asymmetry is the point: you can place <code>Nothing</code> anywhere, but you can never construct a value of it.</p>`,
+        prompt: "Why does one of these compile and the other doesn't?"
+      }],
       ["EaPSB2iGSJymRSBnJbiwyA", "I miss C(++/#).", {
         workingId: "fWof66d5Qra3vyyZ7QjYtw",
         explanation: `<p><code>type Bool = Boolean</code> makes <code>Bool</code> a synonym for <code>Boolean</code> — they're the same type. As in lesson 1, Scala has no truthiness, so <code>1</code> (an <code>Int</code>) can't be assigned to a <code>Boolean</code>. C, C++, and C# allow this; Scala doesn't.</p>`,
@@ -163,12 +179,12 @@
         explanation: `<p><code>type A &lt;: Int</code> declares <code>A</code> as an abstract type with an <strong>upper bound</strong> of <code>Int</code> — <code>A</code> is at most <code>Int</code>, possibly some narrower subtype. So an <code>A</code> is always an <code>Int</code> (making <code>val b: Int = a</code> fine), but an <code>Int</code> isn't always an <code>A</code> (we don't know which subtype <code>A</code> is) — so <code>val a: A = 1</code> fails.</p>`,
         prompt: "What does \`A <: Int\` mean?"
       }],
-      ["t09rZSxjT4GF5iiybl8cSg", "Galaxy brain needed", {
-        explanation: `<p><code>type A &gt;: 1 &lt;: 1 | 2</code> constrains <code>A</code> to be between <code>1</code> (lower bound) and <code>1 | 2</code> (upper bound). So <code>A</code> is either <code>1</code> or <code>1 | 2</code>. The literal <code>1</code> is always a subtype of <code>A</code> (it's the lower bound), so <code>val a: A = 1</code> works. But <code>2</code> is only a subtype of <code>A</code> if <code>A</code> is <code>1 | 2</code> — and the compiler can't assume that, so <code>val b: A = 2</code> fails.</p>`,
+      ["tu7TLvVqRtmGrgl0m4tgKw", "Galaxy brain needed", {
+        explanation: `<p><code>type A &gt;: 1 &lt;: Int</code> constrains <code>A</code> to be between <code>1</code> (lower bound) and <code>Int</code> (upper bound). The lower bound means the literal <code>1</code> is always a subtype of <code>A</code>, so <code>val a: A = 1</code> works. But <code>A</code> could be as narrow as <code>1</code> itself — in which case <code>2</code> wouldn't be a subtype of <code>A</code>. The compiler can't assume <code>A</code> is wider than its lower bound, so <code>val b: A = 2</code> fails.</p>`,
         prompt: "What's allowed for \`A\`, and why does only one assignment compile?"
       }],
-      ["maGElgD8S2e0jG8Oo87BAg", "Brain broke", {
-        explanation: `<p>The bounds <code>&gt;: 1 | 2 &lt;: 2</code> say <code>A</code> must be at least <code>1 | 2</code> and at most <code>2</code>. But <code>1 | 2</code> isn't a subtype of <code>2</code> — there's no valid type that fits both constraints. So the type declaration itself is rejected as inconsistent.</p>`,
+      ["hhmE6vIaSRGAf6xEL46Dog", "Brain broke", {
+        explanation: `<p>This is the previous snippet's bounds flipped: <code>&gt;: Int &lt;: 1</code>. It says <code>A</code> must be at least <code>Int</code> and at most <code>1</code> — but <code>Int</code> isn't a subtype of <code>1</code>, so there's no valid type that fits both constraints. The compiler rejects the declaration itself as inconsistent.</p>`,
         prompt: "What's wrong with these bounds?"
       }],
       ["O4VzptNCSryMMApQBXfhKA", "Type-level arithmetic? Wait, that's a thing?", {
