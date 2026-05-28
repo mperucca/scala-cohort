@@ -166,8 +166,8 @@
         explanation: `<p>Enums in Scala 3 can take parameters and define methods, like classes. Here <code>Expression(result: =&gt; Int)</code> declares a by-name <code>Int</code> parameter (re-evaluated on each access), and each <code>case</code> supplies its value. The shared <code>evaluate()</code> method returns <code>result</code>, so <code>Increment(6).evaluate() == 7</code> and <code>Add(2, 3).evaluate() == 5</code>.</p>`,
         prompt: "Explain this code."
       }],
-      ["Yecaj2NPQM2QU1uIOW7nag", "`sealed` came before `enum`, and is often more flexible. Poke around.", {
-        workingId: "s8wA89shROmwyEThGFK4dg",
+      ["cb6aHPjJQeSefOSnUMcrhg", "`sealed` came before `enum`, and is often more flexible. Poke around.", {
+        workingId: "KI4btYWpR1KX0qSXn6r6mA",
         explanation: `<p>Sealed class hierarchies enable exhaustiveness checking in <code>match</code>. The broken version only matches <code>Increment</code>, but doesn't cover the broader <code>Add</code> case, so the compiler warns. Matching on <code>case add: Add =&gt; ...</code> covers <code>Add</code> and any subtype (including <code>Increment</code>), making the match exhaustive.</p>`,
         prompt: "What's the warning about?"
       }],
