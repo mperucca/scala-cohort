@@ -146,6 +146,10 @@
         explanation: `<p><code>Describes[? &gt;: 1]</code> accepts any <code>Describes</code> whose type parameter is a supertype of <code>1</code>. Inside <code>describe1</code>, we pass <code>1</code> to <code>d.describe</code>. Since <code>1</code> is a subtype of whatever <code>A</code> actually is (we know <code>A</code> is at least <code>1</code>), this is safe. So <code>describes1</code> and <code>describesInts</code> qualify; <code>describesStrings</code> doesn't (<code>String</code> isn't a supertype of <code>1</code>).</p>`,
         prompt: "How does the lower bound make \`d.describe(1)\` safe?"
       }],
+      ["ctHgBmq1ROqs1p2amZQyvw", "Can I combine both bounds at once?", {
+        explanation: `<p><code>Of[? &gt;: 1 &lt;: Int]</code> combines a lower and upper bound: the type argument <code>T</code> must satisfy <code>1 &lt;: T &lt;: Int</code>. <code>1</code>, <code>Int</code>, and <code>1 | 2</code> all qualify — each is a supertype of <code>1</code> and a subtype of <code>Int</code>. <code>2 | 3</code> fails the <em>lower</em> bound (<code>1</code> isn't one of its members), and <code>1 | String</code> fails the <em>upper</em> bound (<code>String</code> isn't a subtype of <code>Int</code>).</p>`,
+        prompt: "What does \`Of[? >: 1 <: Int]\` allow?"
+      }],
       ["UiQWUswbSp2gs3LPvaMQxQ", "Combined bounds on a function?", {
         explanation: `<p><code>A &gt;: "pizza" &lt;: "pizza" | "sandwich"</code> constrains <code>A</code> to be between <code>"pizza"</code> and <code>"pizza" | "sandwich"</code> — so <code>A</code> is either <code>"pizza"</code> or <code>"pizza" | "sandwich"</code>. The body uses both bounds: the lower lets <code>person.eat("pizza")</code> work; the upper lets <code>Eats["pizza" | "sandwich"]</code> eat <code>brought</code>. Among the calls, only the ones that satisfy both bounds compile — the rest don't.</p>`,
         prompt: "Which calls compile, and why?"
