@@ -150,6 +150,10 @@
         explanation: `<p>This extends the previous <code>update</code> sugar to <code>Int</code>. <code>2(3) = 6</code> desugars to <code>2.update(3, 6)</code>, which (per the extension) computes <code>2 * 3 == 6</code> → <code>true</code>. Likewise <code>1(4) = 0</code> computes <code>1 * 4 == 0</code> → <code>false</code>. Whether this is <em>useful</em> is another question.</p>`,
         prompt: "What does \`2(3) = 6\` actually evaluate to?"
       }],
+      ["MfaQ5B7ISxSUlkbcBc2szw", "Same idea for a single field — but what happens if you delete the getter `v`?", {
+        explanation: `<p>A method named <code>x_=</code> is a <strong>setter</strong>: <code>b.v = 2</code> desugars to <code>b.v_=(2)</code> — it looks like a field write but is really a method call that can run arbitrary code. It's the named-property cousin of <code>update</code>. Here the backing field <code>i</code> stays <code>private</code>, so <code>b.i</code> fails to compile while <code>b.v</code> and <code>b.v = 2</code> give controlled access through the getter/setter pair.</p><p>Try deleting the getter <code>def v = i</code>: now <code>b.v = 2</code> stops compiling. The <code>= </code> sugar only kicks in when a matching getter <code>v</code> exists alongside the setter — <code>b.v_=(2)</code> still works by its real name, but the assignment form needs the pair. (The explicit <code>b.v_=(1)</code> call doesn't care.)</p>`,
+        prompt: "What's the syntax benefit of defining a \`_=\` setter, and what happens if I delete the getter \`v\`?"
+      }],
       ["3pKNaHuZTiWVjiXPPqoNLQ", "Why are these different if they have the same implementation?", {
         explanation: `<p>Operators ending in <code>:</code> are <strong>right-associative</strong>; others are left-associative. <code>2 ** 2 ** 3</code> evaluates as <code>(2 ** 2) ** 3 = 4³ = 64</code>. <code>2 **: 2 **: 3</code> evaluates as <code>2 **: (2 **: 3) = 2^(2³) = 2⁸ = 256</code>. Same operation, opposite grouping.</p>`,
         prompt: "Why do these produce different results?"
