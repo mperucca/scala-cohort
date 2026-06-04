@@ -13,8 +13,31 @@
     li.understood::before { background: #a6e3a1; color: #1e1e2e; border-color: #a6e3a1; }
     li.revisit::before { background: #f9e2af; color: #1e1e2e; border-color: #f9e2af; }
     details { flex: 1; min-width: 0; }
-    .iframe-pair { display: flex; gap: 0.5rem; width: 100%; height: 60vh; margin-top: 0.5rem; }
-    .iframe-column { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+    .iframe-pair { display: flex; flex-direction: column; gap: 0; width: 100%; height: 80vh; margin-top: 0.5rem; position: relative; min-height: 140px; }
+    .splitter { flex: 0 0 8px; align-self: stretch; margin: 0 0.25rem; background: #45475a; border-radius: 4px; cursor: col-resize; }
+    .splitter:hover { background: #585b70; }
+    /* Layout is driven by JS classes on .iframe-pair: split-row / split-col / tabs. */
+    .pane-area { flex: 1; min-height: 0; display: flex; gap: 0; }
+    .iframe-pair.split-row .pane-area { flex-direction: row; }
+    .iframe-pair.split-col .pane-area { flex-direction: column; }
+    .iframe-pair.tabs .pane-area { flex-direction: row; }
+    .iframe-pair.split-col .splitter { margin: 0.25rem 0; cursor: row-resize; }
+    .iframe-pair.tabs .splitter { display: none; }
+    .pane.hidden { display: none; }
+    .iframe-pair.tabs .pane:not(.hidden) { flex: 1 1 0 !important; } /* fill the box, ignoring any dragged split ratio */
+    .tab-bar { display: none; gap: 0.3rem; flex-shrink: 0; margin-bottom: 0.4rem; }
+    .tab-bar:empty { display: none !important; }
+    .iframe-pair.tabs .tab-bar { display: flex; }
+    .tab { background: #313244; border: 1px solid #585b70; border-bottom: 0; border-radius: 6px 6px 0 0; color: #a6adc8; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 0.3rem 0.9rem; }
+    .tab:hover { background: #45475a; }
+    .tab.active { background: #45475a; color: #cdd6f4; border-color: #89b4fa; }
+    .drag-handle { height: 8px; background: #45475a; cursor: ns-resize; flex-shrink: 0; border-radius: 4px; margin-top: 0.35rem; }
+    .drag-handle:hover { background: #585b70; }
+    .drag-shield { position: fixed; inset: 0; z-index: 9999; cursor: nwse-resize; }
+    .fs-btn { position: absolute; top: 6px; right: 6px; z-index: 5; background: rgba(49,50,68,0.9); color: #89dceb; border: 1px solid #585b70; border-radius: 4px; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0.2rem 0.45rem; font-family: inherit; }
+    .fs-btn:hover { background: #45475a; border-color: #89dceb; }
+    .iframe-content:fullscreen, iframe:fullscreen { background: #1e1e2e; }
+    .iframe-column { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
     .iframe-content { flex: 1; min-height: 0; display: flex; flex-direction: column; }
     iframe { width: 100%; flex: 1; display: block; min-height: 0; border: 0; }
     .iframe-reveal-btn { flex: 1; background: #313244; border: 1px dashed #585b70; border-radius: 6px; color: #89dceb; font-size: 1rem; font-weight: 600; cursor: pointer; font-family: inherit; }
@@ -255,27 +278,48 @@
       const content = document.createElement("div");
       content.className = "iframe-content";
 
+      let placeholder = null;
+      function reveal() {
+        if (placeholder) { placeholder.remove(); placeholder = null; content.appendChild(iframe); }
+        if (!iframe.src) iframe.src = url;
+      }
+
       if (hiddenInitially) {
-        const placeholder = document.createElement("button");
+        placeholder = document.createElement("button");
         placeholder.type = "button";
         placeholder.className = "iframe-reveal-btn";
-        placeholder.textContent = "💡 Reveal";
+        placeholder.textContent = "👁 Reveal";
         placeholder.title = "Reveal the working version";
-        placeholder.addEventListener("click", (e) => {
-          e.stopPropagation();
-          placeholder.remove();
-          content.appendChild(iframe);
-          if (!iframe.src) iframe.src = url;
-        });
+        placeholder.addEventListener("click", (e) => { e.stopPropagation(); reveal(); });
         content.appendChild(placeholder);
       } else {
         content.appendChild(iframe);
       }
 
+      const fsBtn = document.createElement("button");
+      fsBtn.type = "button";
+      fsBtn.className = "fs-btn";
+      fsBtn.textContent = "⤢";
+      fsBtn.title = "Fullscreen this snippet";
+      fsBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!iframe.src) iframe.src = url;
+        const target = content.contains(iframe) ? content : iframe;
+        if (target.requestFullscreen) target.requestFullscreen();
+      });
+      column.appendChild(fsBtn);
+
       column.appendChild(content);
-      return { column, iframe };
+      return { column, iframe, reveal };
     }
 
+
+    // Split along the longer side of the box (the smaller dimension stays whole); tabs only when tiny both ways.
+    const MIN_PX = 480; // below this in BOTH dimensions, a single pane is too small -> tabs
+    function computeLayout(width, height) { // the whole snippet box
+      if (width <= MIN_PX && height <= MIN_PX) return "tabs"; // too small both ways
+      return height > width ? "split-col" : "split-row"; // taller -> stack, wider -> side by side
+    }
 
     const ol = document.getElementById("snippets");
     snippets.forEach(([id, title, config], index) => {
@@ -293,8 +337,93 @@
 
       const pair = document.createElement("div");
       pair.className = "iframe-pair";
-      pair.appendChild(broken.column);
-      if (working) pair.appendChild(working.column);
+
+      const tabBar = document.createElement("div");
+      tabBar.className = "tab-bar";
+
+      const paneArea = document.createElement("div");
+      paneArea.className = "pane-area";
+
+      broken.column.classList.add("pane");
+      paneArea.appendChild(broken.column);
+
+      let activeTab = "scenario";
+      let scenarioTab = null, solutionTab = null;
+
+      if (working) {
+        working.column.classList.add("pane");
+
+        const splitter = document.createElement("div");
+        splitter.className = "splitter";
+        splitter.title = "Drag to balance the two panes";
+        splitter.addEventListener("mousedown", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const rect = paneArea.getBoundingClientRect();
+          const vertical = getComputedStyle(paneArea).flexDirection === "column";
+          // Shield keeps mouse events from being swallowed by the iframes mid-drag.
+          const shield = document.createElement("div");
+          shield.className = "drag-shield";
+          shield.style.cursor = vertical ? "row-resize" : "col-resize";
+          document.body.appendChild(shield);
+          const onMove = (ev) => {
+            let ratio = vertical
+              ? (ev.clientY - rect.top) / rect.height
+              : (ev.clientX - rect.left) / rect.width;
+            ratio = Math.max(0.1, Math.min(0.9, ratio));
+            broken.column.style.flex = ratio;
+            working.column.style.flex = 1 - ratio;
+          };
+          const onUp = () => {
+            shield.remove();
+            document.removeEventListener("mousemove", onMove);
+            document.removeEventListener("mouseup", onUp);
+          };
+          document.addEventListener("mousemove", onMove);
+          document.addEventListener("mouseup", onUp);
+        });
+        paneArea.appendChild(splitter);
+        paneArea.appendChild(working.column);
+
+        scenarioTab = document.createElement("button");
+        scenarioTab.type = "button";
+        scenarioTab.className = "tab active";
+        scenarioTab.textContent = "Scenario";
+        solutionTab = document.createElement("button");
+        solutionTab.type = "button";
+        solutionTab.className = "tab";
+        solutionTab.textContent = "Solution";
+        tabBar.appendChild(scenarioTab);
+        tabBar.appendChild(solutionTab);
+        scenarioTab.addEventListener("click", (e) => { e.stopPropagation(); activeTab = "scenario"; applyTabVisibility(); });
+        solutionTab.addEventListener("click", (e) => { e.stopPropagation(); activeTab = "solution"; applyTabVisibility(); });
+      }
+
+      function applyTabVisibility() {
+        if (working && pair.classList.contains("tabs")) {
+          broken.column.classList.toggle("hidden", activeTab !== "scenario");
+          working.column.classList.toggle("hidden", activeTab !== "solution");
+          scenarioTab.classList.toggle("active", activeTab === "scenario");
+          solutionTab.classList.toggle("active", activeTab === "solution");
+          if (activeTab === "solution") working.reveal();
+        } else {
+          broken.column.classList.remove("hidden");
+          if (working) working.column.classList.remove("hidden");
+        }
+      }
+
+      function applyLayout() {
+        if (!pair.clientWidth) return; // not rendered yet (e.g. collapsed) — re-runs when shown
+        const layout = computeLayout(pair.clientWidth, pair.clientHeight);
+        pair.classList.remove("split-row", "split-col", "tabs");
+        pair.classList.add(layout);
+        applyTabVisibility();
+      }
+      // Each snippet observes its own size and re-lays-out independently.
+      new ResizeObserver(applyLayout).observe(pair);
+
+      pair.appendChild(tabBar);
+      pair.appendChild(paneArea);
 
       const details = document.createElement("details");
       details.addEventListener("toggle", () => {
@@ -362,6 +491,28 @@
       details.appendChild(summary);
       details.appendChild(pair);
 
+      const dragHandle = document.createElement("div");
+      dragHandle.className = "drag-handle";
+      dragHandle.title = "Drag to resize the snippet height";
+      dragHandle.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        const startY = e.clientY;
+        const startHeight = pair.offsetHeight;
+        const shield = document.createElement("div");
+        shield.className = "drag-shield";
+        shield.style.cursor = "ns-resize";
+        document.body.appendChild(shield);
+        const onMove = (ev) => { pair.style.height = Math.max(140, startHeight + ev.clientY - startY) + "px"; };
+        const onUp = () => {
+          shield.remove();
+          document.removeEventListener("mousemove", onMove);
+          document.removeEventListener("mouseup", onUp);
+        };
+        document.addEventListener("mousemove", onMove);
+        document.addEventListener("mouseup", onUp);
+      });
+      details.appendChild(dragHandle);
+
       const tools = document.createElement("div");
       tools.className = "snippet-tools";
 
@@ -369,7 +520,7 @@
         const askAi = document.createElement("button");
         askAi.type = "button";
         askAi.className = "pill ask-ai";
-        askAi.textContent = "Ask ChatGPT";
+        askAi.textContent = "💬 Ask ChatGPT";
         askAi.title = "Open AI chat with the original snippet prefilled";
         askAi.addEventListener("click", async (e) => {
           e.stopPropagation();
@@ -378,7 +529,7 @@
           const prompt = buildPrompt(url, data, customPrompt);
           const target = `https://chatgpt.com/?q=${encodeURIComponent(prompt)}`;
           window.open(target, "ask-ai", "popup=yes,width=1300,height=950");
-          askAi.textContent = "Ask ChatGPT";
+          askAi.textContent = "💬 Ask ChatGPT";
         });
         tools.appendChild(askAi);
       }
