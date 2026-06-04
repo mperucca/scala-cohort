@@ -177,6 +177,11 @@
         explanation: `<p>With a <code>foreach</code> extension method on <code>Int</code>, the for-loop sugar becomes available: <code>for (i &lt;- 1)</code> desugars to <code>1.foreach(i =&gt; ...)</code>. Both forms are equivalent.</p>`,
         prompt: "What for-loop sugar does \`foreach\` enable?"
       }],
+      ["CyR16HdJRUuTv7nd2WyXtA", "With multiple generators, can I avoid all that nesting?", {
+        workingId: "rqqY5OcqTSCkx8phpUF9Kw",
+        explanation: `<p>A statement-form <code>for</code> (no <code>yield</code>) with multiple generators desugars to <strong>nested <code>foreach</code></strong> calls: <code>for { i &lt;- 1; j &lt;- 2; k &lt;- 3 } { … }</code> becomes <code>1.foreach(i =&gt; 2.foreach(j =&gt; 3.foreach(k =&gt; …)))</code>. Same behavior — but the for-syntax flattens the staircase of nested lambdas into one flat block. That's the readability win. Note that only <code>foreach</code> is needed here; <code>flatMap</code> and <code>map</code> only come into play once you add <code>yield</code>.</p>`,
+        prompt: "How does a multi-generator \`for\` without \`yield\` avoid nested \`foreach\` calls?"
+      }],
       ["sYpSmAhNTLmClFbwwO1aJw", "Now with `withFilter`, can I use `if`?", {
         workingId: "OFDm0nkYSwiOJDIPBXGTrQ",
         explanation: `<p>With both <code>foreach</code> and <code>withFilter</code> extensions, the for-loop's <code>if</code> guard works too: <code>for { i &lt;- 0; if i % 2 == 0 } { ... }</code> desugars to <code>0.withFilter(_ % 2 == 0).foreach(...)</code>. Each <code>if</code> in a for-comprehension calls <code>withFilter</code>.</p>`,
@@ -187,7 +192,7 @@
         explanation: `<p><code>yield</code> in a for-comprehension desugars to <code>map</code>. With a <code>map</code> extension on <code>Int</code>, the <code>for { i &lt;- 1 } yield { i + 1 }</code> syntax becomes available — it desugars to <code>1.map(i =&gt; i + 1)</code>.</p>`,
         prompt: "What does \`yield\` desugar to?"
       }],
-      ["LF863TQrRKuJzzOCr5i6mg", "Now with `flatMap`, can I chain `<-`s?", {
+      ["bg3NQEyMQnSciLENvKHLnw", "Now with `flatMap`, can I chain `<-`s?", {
         workingId: "j5Hsm8NWSzGBh94a6Oarjg",
         explanation: `<p>A for-comprehension with multiple <code>&lt;-</code> generators desugars to nested <code>flatMap</code> calls, with the final <code>&lt;-</code> combined with <code>yield</code> becoming a <code>map</code>. So <code>for { i &lt;- 1; j &lt;- 2; k &lt;- 3 } yield i + j + k</code> is just <code>1.flatMap(i =&gt; 2.flatMap(j =&gt; 3.map(k =&gt; i + j + k)))</code>.</p>`,
         prompt: "What does a multi-generator for-yield desugar to?"
