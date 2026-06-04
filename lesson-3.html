@@ -14,7 +14,7 @@
     li.revisit::before { background: #f9e2af; color: #1e1e2e; border-color: #f9e2af; }
     details { flex: 1; min-width: 0; }
     .iframe-pair { display: flex; flex-direction: column; gap: 0; width: 100%; height: 80vh; margin-top: 0.5rem; position: relative; min-height: 140px; }
-    .splitter { flex: 0 0 8px; align-self: stretch; margin: 0 0.25rem; background: #45475a; border-radius: 4px; cursor: col-resize; }
+    .splitter { flex: 0 0 8px; align-self: stretch; margin: 0 0.25rem; background: #45475a; border-radius: 4px; cursor: col-resize; touch-action: none; }
     .splitter:hover { background: #585b70; }
     /* Layout is driven by JS classes on .iframe-pair: split-row / split-col / tabs. */
     .pane-area { flex: 1; min-height: 0; display: flex; gap: 0; }
@@ -31,7 +31,7 @@
     .tab { background: #313244; border: 1px solid #585b70; border-bottom: 0; border-radius: 6px 6px 0 0; color: #a6adc8; cursor: pointer; font-family: inherit; font-size: 0.85rem; font-weight: 600; padding: 0.3rem 0.9rem; }
     .tab:hover { background: #45475a; }
     .tab.active { background: #45475a; color: #cdd6f4; border-color: #89b4fa; }
-    .drag-handle { height: 8px; background: #45475a; cursor: ns-resize; flex-shrink: 0; border-radius: 4px; margin-top: 0.35rem; }
+    .drag-handle { height: 8px; background: #45475a; cursor: ns-resize; flex-shrink: 0; border-radius: 4px; margin-top: 0.35rem; touch-action: none; }
     .drag-handle:hover { background: #585b70; }
     .drag-shield { position: fixed; inset: 0; z-index: 9999; cursor: nwse-resize; }
     .fs-btn { position: absolute; top: 6px; right: 6px; z-index: 5; background: rgba(49,50,68,0.9); color: #89dceb; border: 1px solid #585b70; border-radius: 4px; cursor: pointer; font-size: 1rem; line-height: 1; padding: 0.2rem 0.45rem; font-family: inherit; }
@@ -354,16 +354,12 @@
         const splitter = document.createElement("div");
         splitter.className = "splitter";
         splitter.title = "Drag to balance the two panes";
-        splitter.addEventListener("mousedown", (e) => {
+        splitter.addEventListener("pointerdown", (e) => {
           e.preventDefault();
           e.stopPropagation();
+          splitter.setPointerCapture(e.pointerId);
           const rect = paneArea.getBoundingClientRect();
           const vertical = getComputedStyle(paneArea).flexDirection === "column";
-          // Shield keeps mouse events from being swallowed by the iframes mid-drag.
-          const shield = document.createElement("div");
-          shield.className = "drag-shield";
-          shield.style.cursor = vertical ? "row-resize" : "col-resize";
-          document.body.appendChild(shield);
           const onMove = (ev) => {
             let ratio = vertical
               ? (ev.clientY - rect.top) / rect.height
@@ -373,12 +369,11 @@
             working.column.style.flex = 1 - ratio;
           };
           const onUp = () => {
-            shield.remove();
-            document.removeEventListener("mousemove", onMove);
-            document.removeEventListener("mouseup", onUp);
+            splitter.removeEventListener("pointermove", onMove);
+            splitter.removeEventListener("pointerup", onUp);
           };
-          document.addEventListener("mousemove", onMove);
-          document.addEventListener("mouseup", onUp);
+          splitter.addEventListener("pointermove", onMove);
+          splitter.addEventListener("pointerup", onUp);
         });
         paneArea.appendChild(splitter);
         paneArea.appendChild(working.column);
@@ -492,22 +487,18 @@
       const dragHandle = document.createElement("div");
       dragHandle.className = "drag-handle";
       dragHandle.title = "Drag to resize the snippet height";
-      dragHandle.addEventListener("mousedown", (e) => {
+      dragHandle.addEventListener("pointerdown", (e) => {
         e.preventDefault();
+        dragHandle.setPointerCapture(e.pointerId);
         const startY = e.clientY;
         const startHeight = pair.offsetHeight;
-        const shield = document.createElement("div");
-        shield.className = "drag-shield";
-        shield.style.cursor = "ns-resize";
-        document.body.appendChild(shield);
         const onMove = (ev) => { pair.style.height = Math.max(140, startHeight + ev.clientY - startY) + "px"; };
         const onUp = () => {
-          shield.remove();
-          document.removeEventListener("mousemove", onMove);
-          document.removeEventListener("mouseup", onUp);
+          dragHandle.removeEventListener("pointermove", onMove);
+          dragHandle.removeEventListener("pointerup", onUp);
         };
-        document.addEventListener("mousemove", onMove);
-        document.addEventListener("mouseup", onUp);
+        dragHandle.addEventListener("pointermove", onMove);
+        dragHandle.addEventListener("pointerup", onUp);
       });
       details.appendChild(dragHandle);
 
