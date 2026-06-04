@@ -299,7 +299,7 @@
         const target = content.contains(iframe) ? content : iframe;
         if (target.requestFullscreen) target.requestFullscreen();
       });
-      column.appendChild(fsBtn);
+      if (document.fullscreenEnabled) column.appendChild(fsBtn); // hidden where unsupported (e.g. iPhone Safari)
 
       column.appendChild(content);
       return { column, iframe, reveal };
