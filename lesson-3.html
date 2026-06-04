@@ -78,10 +78,20 @@
     .progress-bar .revisit-count { color: #f9e2af; }
     .progress-bar .clear-link { background: transparent; border: none; color: #6c7086; cursor: pointer; font: inherit; padding: 0; text-decoration: underline; }
     .progress-bar .clear-link:hover { color: #cdd6f4; }
-    /* Number is a top-left marker; only the title is indented past it, the iframe spans full width. */
+    /* Full-width snippet: number + question are one header row; when open, a single border wraps the whole card. */
     #snippets > li { display: block; position: relative; margin-bottom: 0.5rem; }
-    #snippets > li::before { position: absolute; left: 0; top: 0; margin-top: 0; }
-    #snippets > li > details > summary { margin-left: 2.55rem; }
+    #snippets > li::before { display: none; }
+    .snippet-num { flex-shrink: 0; }
+    #snippets > li.understood > details > summary { background: linear-gradient(rgba(166,227,161,0.14), rgba(166,227,161,0.14)), #313244; border-color: #a6e3a1; }
+    #snippets > li.understood > details[open] { border-color: #a6e3a1; }
+    #snippets > li.revisit > details > summary { background: linear-gradient(rgba(249,226,175,0.14), rgba(249,226,175,0.14)), #313244; border-color: #f9e2af; }
+    #snippets > li.revisit > details[open] { border-color: #f9e2af; }
+    #snippets > li > details[open] { border: 1px solid #585b70; border-radius: 8px; overflow: hidden; }
+    #snippets > li > details[open] > summary { border: 0; border-bottom: 1px solid #45475a; border-radius: 0; }
+    #snippets > li > details[open] .iframe-pair { margin-top: 0; }
+    #snippets > li > details[open] > .snippet-tools { margin: 0.5rem 0.6rem 0; }
+    #snippets > li > details[open] > .marks-row { margin: 0.4rem 0.6rem 0.6rem; }
+    #snippets > li > details[open] > .explanation-details { margin: 0.5rem 0.6rem; }
   </style>
 </head>
 <body>
@@ -428,6 +438,10 @@
       });
 
       const summary = document.createElement("summary");
+      const numSpan = document.createElement("span");
+      numSpan.className = "snippet-num";
+      numSpan.textContent = (index + 1) + ".";
+      summary.appendChild(numSpan);
       const titleSpan = document.createElement("span");
       titleSpan.className = "summary-title";
       titleSpan.textContent = title;
