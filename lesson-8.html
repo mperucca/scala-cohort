@@ -131,8 +131,8 @@
         explanation: `<p><code>unapply</code> enables destructuring/pattern matching: <code>val DirectionAndMagnitude(neg, mag) = -6</code> calls <code>unapply(-6)</code> and binds the named-tuple fields to <code>neg</code> and <code>mag</code>. Without the sugar, you'd call <code>unapply</code> manually and access the fields explicitly.</p>`,
         prompt: "What's the syntax benefit of defining \`unapply\`?"
       }],
-      ["sdkKYBznR1Kq99BJmI3Rhw", "Oh yeah, what about the overflow case?", {
-        workingId: "EUteShFlSL2Lfsi0RB9xEA",
+      ["3RuZN0gbQ6mmxPTdbvd2Bw", "Oh yeah, what about the overflow case?", {
+        workingId: "Tel1XPyOSd25XgpGvklUOA",
         explanation: `<p><code>unapply</code> can return <code>Option[...]</code>, where <code>None</code> signals "doesn't match" — useful for special cases like <code>Int.MinValue</code>, whose <code>.abs</code> would overflow. Used in a <code>val</code> binding, a <code>None</code> result throws a <code>MatchError</code>. Use a full <code>match</code> with a fallback case so you can handle the no-match path explicitly.</p>`,
         prompt: "What does returning \`Option\` from \`unapply\` enable, and how should I use it?"
       }],
